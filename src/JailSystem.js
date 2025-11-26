@@ -1046,5 +1046,6 @@ class JailSystem {
     }
 }
 
-// Export singleton
+// Export singleton and configs
 export const jailSystem = new JailSystem()
+export { JAIL_CONFIGS }

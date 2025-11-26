@@ -208,7 +208,7 @@ Hooks.once('ready', async () => {
         const { captureSystem, CAPTURE_OUTCOMES } = await import('./CaptureSystem.js')
         const { barkSystem, BARK_TYPES } = await import('./BarkSystem.js')
         const { telegraphSystem, TELEGRAPH_TYPES } = await import('./TelegraphSystem.js')
-        const { jailSystem, JAIL_TEMPLATES } = await import('./JailSystem.js')
+        const { jailSystem, JAIL_CONFIGS } = await import('./JailSystem.js')
         
         // Store in API
         moduleAPI.Waypoint = Waypoint
@@ -235,7 +235,7 @@ Hooks.once('ready', async () => {
         moduleAPI.CAPTURE_OUTCOMES = CAPTURE_OUTCOMES
         moduleAPI.BARK_TYPES = BARK_TYPES
         moduleAPI.TELEGRAPH_TYPES = TELEGRAPH_TYPES
-        moduleAPI.JAIL_TEMPLATES = JAIL_TEMPLATES
+        moduleAPI.JAIL_CONFIGS = JAIL_CONFIGS
         
         // Register the hub opener
         moduleAPI.openHub = () => GMHubApp.open()
