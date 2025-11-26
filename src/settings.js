@@ -652,8 +652,8 @@ export function registerSettings() {
     game.settings.register(MODULE_ID, 'jailScenes', {
         scope: 'world',
         config: false,
-        type: Object,
-        default: {}
+        type: Array,
+        default: []
     })
     
     // Prisoner tracking data

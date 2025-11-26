@@ -277,7 +277,9 @@ class JailSystem {
      * Load jail scene IDs from settings
      */
     _loadJailScenes() {
-        this._jailSceneIds = getSetting('jailScenes') || []
+        const stored = getSetting('jailScenes')
+        // Ensure we always have an array (in case old Object type setting exists)
+        this._jailSceneIds = Array.isArray(stored) ? stored : []
     }
     
     /**
