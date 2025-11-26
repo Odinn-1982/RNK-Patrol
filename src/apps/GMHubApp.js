@@ -691,74 +691,104 @@ export class GMHubApp extends Application {
     
     /**
      * Clear all waypoint graphics from the canvas
-     * This removes orphaned PIXI graphics even if patrol data is gone
+     * This removes ALL patrols and waypoints from the current scene
      */
     async _clearAllWaypoints() {
-        const confirmed = await Dialog.confirm({
-            title: 'Clear All Waypoint Graphics',
-            content: `<p>This will remove ALL waypoint graphics from the current scene.</p>
-                      <p>Use this to clean up orphaned markers that remain after deleting patrols.</p>
-                      <p><strong>Note:</strong> Active patrol waypoints will be recreated when the patrol runs.</p>`
+        const result = await Dialog.wait({
+            title: 'Clear Waypoints',
+            content: `<p>Choose an option:</p>
+                      <p><strong>Clear Graphics Only:</strong> Removes visual markers but keeps patrol data (waypoints will return on refresh)</p>
+                      <p><strong>Delete All Patrols:</strong> Permanently deletes ALL patrols and their waypoints from this scene</p>`,
+            buttons: {
+                graphics: {
+                    icon: '<i class="fas fa-eye-slash"></i>',
+                    label: 'Clear Graphics Only',
+                    callback: () => 'graphics'
+                },
+                delete: {
+                    icon: '<i class="fas fa-trash"></i>',
+                    label: 'Delete All Patrols',
+                    callback: () => 'delete'
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: 'Cancel',
+                    callback: () => 'cancel'
+                }
+            },
+            default: 'cancel'
         });
         
-        if (!confirmed) return;
+        if (result === 'cancel') return;
         
         let removed = 0;
-        
-        // Method 1: Clear through patrol manager if available
         const manager = game.rnkPatrol?.manager;
-        if (manager) {
-            const patrols = manager.getPatrols();
-            for (const patrol of patrols) {
-                if (patrol.waypoints) {
-                    for (const waypoint of patrol.waypoints) {
-                        if (waypoint._visual) {
-                            waypoint.hideVisual();
-                            removed++;
+        
+        if (result === 'delete') {
+            // Delete all patrols from this scene permanently
+            if (manager) {
+                const patrols = [...manager.getPatrols()]; // Copy array since we're modifying it
+                for (const patrol of patrols) {
+                    await manager.deletePatrol(patrol.id);
+                    removed++;
+                }
+            }
+            ui.notifications.info(`Deleted ${removed} patrols and their waypoints from this scene.`);
+        } else {
+            // Just clear graphics
+            // Method 1: Clear through patrol manager if available
+            if (manager) {
+                const patrols = manager.getPatrols();
+                for (const patrol of patrols) {
+                    if (patrol.waypoints) {
+                        for (const waypoint of patrol.waypoints) {
+                            if (waypoint._visual) {
+                                waypoint.hideVisual();
+                                removed++;
+                            }
                         }
                     }
                 }
             }
-        }
-        
-        // Method 2: Scan canvas.controls for orphaned waypoint containers
-        // Waypoints are PIXI.Containers added to canvas.controls with specific structure
-        if (canvas.controls?.children) {
-            const toRemove = [];
-            for (const child of canvas.controls.children) {
-                // Check if this looks like a waypoint visual (has bg, range, icon children)
-                if (child instanceof PIXI.Container && 
-                    child.bg instanceof PIXI.Graphics && 
-                    child.icon instanceof PIXI.Text) {
-                    toRemove.push(child);
-                }
-            }
             
-            for (const container of toRemove) {
-                container.destroy({ children: true });
-                removed++;
-            }
-        }
-        
-        // Method 3: Also clear any waypoint-related layers/containers by name
-        if (canvas.controls?.children) {
-            const toRemove = [];
-            for (const child of canvas.controls.children) {
-                // Check label text for "Waypoint" or "WP"
-                if (child.label?.text?.includes('WP') || child.label?.text?.includes('Waypoint')) {
-                    toRemove.push(child);
+            // Method 2: Scan canvas.controls for orphaned waypoint containers
+            if (canvas.controls?.children) {
+                const toRemove = [];
+                for (const child of canvas.controls.children) {
+                    // Check if this looks like a waypoint visual (has bg, range, icon children)
+                    if (child instanceof PIXI.Container && 
+                        child.bg instanceof PIXI.Graphics && 
+                        child.icon instanceof PIXI.Text) {
+                        toRemove.push(child);
+                    }
                 }
-            }
-            
-            for (const container of toRemove) {
-                if (!container.destroyed) {
+                
+                for (const container of toRemove) {
                     container.destroy({ children: true });
                     removed++;
                 }
             }
+            
+            // Method 3: Also clear any waypoint-related layers/containers by name
+            if (canvas.controls?.children) {
+                const toRemove = [];
+                for (const child of canvas.controls.children) {
+                    if (child.label?.text?.includes('WP') || child.label?.text?.includes('Waypoint')) {
+                        toRemove.push(child);
+                    }
+                }
+                
+                for (const container of toRemove) {
+                    if (!container.destroyed) {
+                        container.destroy({ children: true });
+                        removed++;
+                    }
+                }
+            }
+            
+            ui.notifications.info(`Cleared ${removed} waypoint graphics (will return on refresh if patrol data exists).`);
         }
         
-        ui.notifications.info(`Cleared ${removed} waypoint graphics from the scene.`);
         this.render(false);
     }
 
