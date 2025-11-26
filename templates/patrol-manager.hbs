@@ -1,0 +1,113 @@
+<div class="patrol-manager-content">
+    {{!-- Statistics Bar --}}
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value">{{stats.totalPatrols}}</div>
+            <div class="stat-label">{{localize "rnk-patrol.apps.manager.totalPatrols"}}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{stats.activePatrols}}</div>
+            <div class="stat-label">{{localize "rnk-patrol.apps.manager.active"}}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{stats.totalWaypoints}}</div>
+            <div class="stat-label">{{localize "rnk-patrol.apps.manager.waypoints"}}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{stats.alertedPatrols}}</div>
+            <div class="stat-label">{{localize "rnk-patrol.apps.manager.alerts"}}</div>
+        </div>
+    </div>
+
+    {{!-- Action Buttons --}}
+    <div class="actions-bar">
+        <button type="button" data-action="create-patrol">
+            <i class="fas fa-plus"></i> {{localize "rnk-patrol.apps.manager.createPatrol"}}
+        </button>
+        <button type="button" data-action="create-waypoint" class="secondary">
+            <i class="fas fa-map-pin"></i> {{localize "rnk-patrol.apps.manager.createWaypoint"}}
+        </button>
+        <div style="flex: 1;"></div>
+        <button type="button" data-action="start-all" class="success" title="{{localize 'rnk-patrol.apps.manager.startAll'}}">
+            <i class="fas fa-play"></i>
+        </button>
+        <button type="button" data-action="pause-all" class="warning" title="{{localize 'rnk-patrol.apps.manager.pauseAll'}}">
+            <i class="fas fa-pause"></i>
+        </button>
+        <button type="button" data-action="stop-all" class="danger" title="{{localize 'rnk-patrol.apps.manager.stopAll'}}">
+            <i class="fas fa-stop"></i>
+        </button>
+    </div>
+
+    {{!-- Patrol List --}}
+    <div class="patrol-list">
+        {{#if hasPatrols}}
+            {{#each patrols}}
+            <div class="patrol-item {{#if isActive}}active{{/if}} {{#if isPaused}}paused{{/if}} {{#if hasAlert}}alert{{/if}}" data-patrol-id="{{id}}">
+                <div class="patrol-info">
+                    <div class="patrol-name">
+                        {{name}}
+                        <span class="status-badge {{state}}">{{stateName}}</span>
+                    </div>
+                    <div class="patrol-meta">
+                        <span><i class="fas fa-user"></i> {{tokenName}}</span>
+                        <span><i class="fas fa-map-pin"></i> {{waypointCount}}</span>
+                        <span><i class="fas fa-cog"></i> {{modeName}}</span>
+                    </div>
+                </div>
+                <div class="patrol-actions">
+                    {{#if isActive}}
+                        <button type="button" data-action="pause" title="{{localize 'rnk-patrol.buttons.pause'}}">
+                            <i class="fas fa-pause"></i>
+                        </button>
+                        <button type="button" data-action="stop" title="{{localize 'rnk-patrol.buttons.stop'}}">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                    {{else if isPaused}}
+                        <button type="button" data-action="start" title="{{localize 'rnk-patrol.buttons.resume'}}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button type="button" data-action="stop" title="{{localize 'rnk-patrol.buttons.stop'}}">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                    {{else}}
+                        <button type="button" data-action="start" title="{{localize 'rnk-patrol.buttons.start'}}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    {{/if}}
+                    <button type="button" data-action="select-token" title="{{localize 'rnk-patrol.apps.manager.assignToken'}}">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                    <button type="button" data-action="edit" title="{{localize 'rnk-patrol.buttons.edit'}}">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button type="button" data-action="delete" class="danger" title="{{localize 'rnk-patrol.buttons.delete'}}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {{/each}}
+        {{else}}
+            <div class="no-patrols">
+                <i class="fas fa-route" style="font-size: 2em; margin-bottom: 10px;"></i>
+                <p>{{localize "rnk-patrol.apps.manager.noPatrols"}}</p>
+                <button type="button" data-action="create-patrol">
+                    <i class="fas fa-plus"></i> {{localize "rnk-patrol.apps.manager.createFirst"}}
+                </button>
+            </div>
+        {{/if}}
+    </div>
+
+    {{!-- Footer Actions --}}
+    <div class="actions-bar" style="margin-top: 15px; justify-content: flex-end;">
+        <button type="button" data-action="import" class="secondary">
+            <i class="fas fa-file-import"></i> {{localize "rnk-patrol.buttons.import"}}
+        </button>
+        <button type="button" data-action="export" class="secondary">
+            <i class="fas fa-file-export"></i> {{localize "rnk-patrol.buttons.export"}}
+        </button>
+        <button type="button" data-action="refresh" class="secondary">
+            <i class="fas fa-sync"></i>
+        </button>
+    </div>
+</div>

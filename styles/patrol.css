@@ -1,0 +1,921 @@
+/**
+ * RNK Patrol Styles
+ */
+
+/* ==========================================
+   Variables
+   ========================================== */
+:root {
+    --rnk-patrol-primary: #7B68EE;
+    --rnk-patrol-secondary: #5856d6;
+    --rnk-patrol-success: #34c759;
+    --rnk-patrol-warning: #ff9500;
+    --rnk-patrol-danger: #ff3b30;
+    --rnk-patrol-info: #007aff;
+    --rnk-patrol-dark: #1c1c1e;
+    --rnk-patrol-light: #f2f2f7;
+    --rnk-patrol-accent: #e94560;
+}
+
+/* ==========================================
+   HOTBAR SLOT 5 - GM HUB BUTTON
+   ========================================== */
+
+#hotbar .slot.rnk-patrol-hub-slot {
+    background: linear-gradient(145deg, #1a1a2e, #0f3460) !important;
+    border: 2px solid #e94560 !important;
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.5), inset 0 0 20px rgba(233, 69, 96, 0.1) !important;
+    transition: all 0.3s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+
+#hotbar .slot.rnk-patrol-hub-slot::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+        transparent,
+        rgba(233, 69, 96, 0.1),
+        transparent 30%
+    );
+    animation: rnk-hub-rotate 4s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rnk-hub-rotate {
+    100% { transform: rotate(360deg); }
+}
+
+#hotbar .slot.rnk-patrol-hub-slot:hover {
+    border-color: #ff5a73 !important;
+    box-shadow: 0 0 20px rgba(233, 69, 96, 0.8), inset 0 0 30px rgba(233, 69, 96, 0.2) !important;
+    transform: scale(1.05);
+}
+
+#hotbar .slot.rnk-patrol-hub-slot .slot-icon {
+    filter: drop-shadow(0 0 3px #e94560);
+    z-index: 1;
+    position: relative;
+}
+
+#hotbar .slot.rnk-patrol-hub-slot .key {
+    color: #e94560 !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(233, 69, 96, 0.8);
+    z-index: 1;
+    position: relative;
+}
+
+/* ==========================================
+   General App Styles
+   ========================================== */
+.rnk-patrol {
+    font-family: "Signika", sans-serif;
+}
+
+.rnk-patrol .window-content {
+    padding: 10px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.rnk-patrol h2 {
+    color: var(--rnk-patrol-primary);
+    border-bottom: 2px solid var(--rnk-patrol-primary);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.rnk-patrol h3 {
+    color: var(--rnk-patrol-light);
+    font-size: 1em;
+    margin: 10px 0 5px;
+}
+
+/* ==========================================
+   Patrol Manager
+   ========================================== */
+.patrol-manager .stats-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(123, 104, 238, 0.1);
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.patrol-manager .stat-item {
+    text-align: center;
+}
+
+.patrol-manager .stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--rnk-patrol-primary);
+}
+
+.patrol-manager .stat-label {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.patrol-manager .actions-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.patrol-manager .patrol-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.patrol-manager .patrol-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+}
+
+.patrol-manager .patrol-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.patrol-manager .patrol-item.active {
+    border-left: 3px solid var(--rnk-patrol-success);
+}
+
+.patrol-manager .patrol-item.paused {
+    border-left: 3px solid var(--rnk-patrol-warning);
+}
+
+.patrol-manager .patrol-item.alert {
+    border-left: 3px solid var(--rnk-patrol-danger);
+    animation: pulse-alert 1s infinite;
+}
+
+.patrol-manager .patrol-info {
+    flex: 1;
+}
+
+.patrol-manager .patrol-name {
+    font-weight: bold;
+    color: var(--rnk-patrol-light);
+}
+
+.patrol-manager .patrol-meta {
+    font-size: 0.85em;
+    color: #888;
+    display: flex;
+    gap: 12px;
+    margin-top: 3px;
+}
+
+.patrol-manager .patrol-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.patrol-manager .patrol-actions button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.patrol-manager .patrol-actions button:hover {
+    background: var(--rnk-patrol-primary);
+}
+
+.patrol-manager .no-patrols {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+}
+
+/* ==========================================
+   Patrol Creator & Config
+   ========================================== */
+.patrol-creator .form-group,
+.patrol-config .form-group {
+    margin-bottom: 12px;
+}
+
+.patrol-creator label,
+.patrol-config label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--rnk-patrol-light);
+    font-weight: 500;
+}
+
+.patrol-creator input,
+.patrol-creator select,
+.patrol-config input,
+.patrol-config select {
+    width: 100%;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+}
+
+.patrol-creator input:focus,
+.patrol-config input:focus,
+.patrol-creator select:focus,
+.patrol-config select:focus {
+    outline: none;
+    border-color: var(--rnk-patrol-primary);
+    box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.2);
+}
+
+.patrol-creator .range-group,
+.patrol-config .range-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.patrol-creator .range-group input[type="range"],
+.patrol-config .range-group input[type="range"] {
+    flex: 1;
+}
+
+.patrol-creator .range-value,
+.patrol-config .range-value {
+    min-width: 40px;
+    text-align: center;
+    color: var(--rnk-patrol-primary);
+}
+
+/* Waypoint List */
+.waypoint-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.waypoint-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: grab;
+}
+
+.waypoint-item:active {
+    cursor: grabbing;
+}
+
+.waypoint-item.dragging {
+    opacity: 0.5;
+}
+
+.waypoint-item.unassigned {
+    border-left: 2px solid var(--rnk-patrol-info);
+}
+
+.waypoint-item input[type="checkbox"] {
+    margin-right: 8px;
+    width: auto;
+}
+
+.waypoint-item .waypoint-name {
+    flex: 1;
+}
+
+.waypoint-item .drag-handle {
+    color: #666;
+    cursor: grab;
+}
+
+/* ==========================================
+   Tabs
+   ========================================== */
+.patrol-config .tabs {
+    display: flex;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 15px;
+}
+
+.patrol-config .tabs .item {
+    padding: 8px 16px;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+}
+
+.patrol-config .tabs .item:hover {
+    color: var(--rnk-patrol-light);
+}
+
+.patrol-config .tabs .item.active {
+    color: var(--rnk-patrol-primary);
+    border-bottom-color: var(--rnk-patrol-primary);
+}
+
+.patrol-config .tab-content {
+    display: none;
+}
+
+.patrol-config .tab-content.active {
+    display: block;
+}
+
+/* ==========================================
+   Buttons
+   ========================================== */
+.rnk-patrol button {
+    padding: 8px 16px;
+    background: var(--rnk-patrol-primary);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rnk-patrol button:hover {
+    background: var(--rnk-patrol-secondary);
+    transform: translateY(-1px);
+}
+
+.rnk-patrol button.secondary {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.rnk-patrol button.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.rnk-patrol button.success {
+    background: var(--rnk-patrol-success);
+}
+
+.rnk-patrol button.warning {
+    background: var(--rnk-patrol-warning);
+}
+
+.rnk-patrol button.danger {
+    background: var(--rnk-patrol-danger);
+}
+
+.rnk-patrol button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==========================================
+   Status Badges
+   ========================================== */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: var(--rnk-patrol-success);
+    color: #fff;
+}
+
+.status-badge.paused {
+    background: var(--rnk-patrol-warning);
+    color: #000;
+}
+
+.status-badge.idle {
+    background: #666;
+    color: #fff;
+}
+
+.status-badge.alert {
+    background: var(--rnk-patrol-danger);
+    color: #fff;
+}
+
+/* ==========================================
+   Assignment App
+   ========================================== */
+.patrol-assignment .current-assignment {
+    padding: 12px;
+    background: rgba(123, 104, 238, 0.1);
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.patrol-assignment .patrol-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.patrol-assignment .patrol-option.current {
+    border: 1px solid var(--rnk-patrol-primary);
+}
+
+.patrol-assignment .patrol-option .patrol-info {
+    flex: 1;
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+@keyframes pulse-alert {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 59, 48, 0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* ==========================================
+   Scrollbar
+   ========================================== */
+.rnk-patrol ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rnk-patrol ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.rnk-patrol ::-webkit-scrollbar-thumb {
+    background: var(--rnk-patrol-primary);
+    border-radius: 3px;
+}
+
+.rnk-patrol ::-webkit-scrollbar-thumb:hover {
+    background: var(--rnk-patrol-secondary);
+}
+
+/* ==========================================
+   Responsive
+   ========================================== */
+@media (max-width: 500px) {
+    .patrol-manager .stats-bar {
+        flex-wrap: wrap;
+    }
+    
+    .patrol-manager .stat-item {
+        width: 33%;
+        margin-bottom: 8px;
+    }
+}
+
+/* ==========================================
+   Patrol Creator - Enhanced Waypoint UI
+   ========================================== */
+
+/* Waypoint placement cursor */
+body.rnk-patrol-placing #board {
+    cursor: crosshair !important;
+}
+
+body.rnk-patrol-placing #board * {
+    cursor: crosshair !important;
+}
+
+/* Waypoint Controls */
+.patrol-creator .waypoint-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.patrol-creator .start-placement-btn {
+    background: linear-gradient(135deg, var(--rnk-patrol-success) 0%, #2ea44f 100%);
+    font-size: 1.1em;
+    padding: 12px 20px;
+    width: 100%;
+}
+
+.patrol-creator .start-placement-btn:hover {
+    background: linear-gradient(135deg, #3dd662 0%, var(--rnk-patrol-success) 100%);
+    box-shadow: 0 0 15px rgba(52, 199, 89, 0.5);
+}
+
+.patrol-creator .stop-placement-btn {
+    background: linear-gradient(135deg, var(--rnk-patrol-warning) 0%, #e08600 100%);
+    font-size: 1em;
+    padding: 10px 16px;
+    width: 100%;
+}
+
+.patrol-creator .placement-active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(52, 199, 89, 0.2);
+    border: 2px solid var(--rnk-patrol-success);
+    border-radius: 6px;
+    color: var(--rnk-patrol-success);
+    font-weight: bold;
+    animation: placement-pulse 2s ease-in-out infinite;
+}
+
+@keyframes placement-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+    50% { box-shadow: 0 0 20px 5px rgba(52, 199, 89, 0.2); }
+}
+
+/* Waypoint Sections */
+.patrol-creator .waypoint-section {
+    margin-bottom: 15px;
+}
+
+.patrol-creator .waypoint-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--rnk-patrol-light);
+    font-size: 0.95em;
+    margin-bottom: 8px;
+}
+
+.patrol-creator .waypoint-count {
+    color: var(--rnk-patrol-primary);
+    font-weight: bold;
+}
+
+.patrol-creator .need-more {
+    color: var(--rnk-patrol-warning);
+    font-size: 0.85em;
+    margin-left: 5px;
+}
+
+/* Session Waypoints - The new ones */
+.patrol-creator .session-waypoints .waypoint-list {
+    background: rgba(52, 199, 89, 0.1);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.patrol-creator .session-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    transition: all 0.2s;
+}
+
+.patrol-creator .session-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.patrol-creator .waypoint-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--rnk-patrol-primary);
+    border-radius: 50%;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #fff;
+}
+
+.patrol-creator .waypoint-name {
+    flex: 1;
+    color: var(--rnk-patrol-light);
+}
+
+.patrol-creator .waypoint-coords {
+    font-size: 0.8em;
+    color: #666;
+    font-family: monospace;
+}
+
+.patrol-creator .waypoint-delete {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    padding: 0 !important;
+    background: rgba(255, 59, 48, 0.2) !important;
+    border: none;
+    border-radius: 4px;
+    color: var(--rnk-patrol-danger) !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.patrol-creator .waypoint-delete:hover {
+    background: var(--rnk-patrol-danger) !important;
+    color: #fff !important;
+}
+
+.patrol-creator .clear-waypoints-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: rgba(255, 59, 48, 0.2);
+    color: var(--rnk-patrol-danger);
+    font-size: 0.9em;
+}
+
+.patrol-creator .clear-waypoints-btn:hover {
+    background: var(--rnk-patrol-danger);
+    color: #fff;
+}
+
+/* No Waypoints State */
+.patrol-creator .no-waypoints {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.patrol-creator .no-waypoints i {
+    font-size: 2em;
+    color: #555;
+}
+
+.patrol-creator .no-waypoints p {
+    margin: 0;
+}
+
+/* Existing Waypoints */
+.patrol-creator .existing-waypoints {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.patrol-creator .existing-waypoints .help-text {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.patrol-creator .existing-list {
+    max-height: 150px;
+}
+
+.patrol-creator .existing-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+}
+
+.patrol-creator .existing-item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.patrol-creator .unassigned-badge {
+    color: var(--rnk-patrol-info);
+    font-size: 0.8em;
+}
+
+/* Footer */
+.patrol-creator .sheet-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.patrol-creator .footer-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.patrol-creator .footer-buttons button {
+    flex: 1;
+    padding: 12px 16px;
+}
+
+.patrol-creator .footer-buttons button[type="submit"] {
+    background: var(--rnk-patrol-primary);
+}
+
+.patrol-creator .save-start-btn {
+    background: linear-gradient(135deg, var(--rnk-patrol-success) 0%, #2ea44f 100%) !important;
+}
+
+.patrol-creator .save-start-btn:hover {
+    background: linear-gradient(135deg, #3dd662 0%, var(--rnk-patrol-success) 100%) !important;
+}
+
+.patrol-creator .footer-buttons button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================
+   BLINDFOLD OVERLAY
+   ========================================== */
+
+#rnk-patrol-blindfold {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+#rnk-patrol-blindfold.active {
+    display: flex;
+}
+
+#rnk-patrol-blindfold.fade-in {
+    animation: blindfold-fade-in 1s ease-out;
+}
+
+#rnk-patrol-blindfold.fading {
+    animation: blindfold-fade-out 2s ease-in forwards;
+}
+
+@keyframes blindfold-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes blindfold-fade-out {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0; }
+}
+
+#rnk-patrol-blindfold .blindfold-content {
+    text-align: center;
+    color: #333;
+}
+
+#rnk-patrol-blindfold .blindfold-content i {
+    font-size: 4em;
+    margin-bottom: 20px;
+    color: #222;
+    animation: blindfold-pulse 2s ease-in-out infinite;
+}
+
+@keyframes blindfold-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+#rnk-patrol-blindfold .blindfold-content p {
+    font-size: 1.5em;
+    font-style: italic;
+    color: #444;
+    transition: opacity 0.3s ease;
+}
+
+/* ==========================================
+   CAPTURE DIALOG
+   ========================================== */
+
+.rnk-patrol-capture-dialog {
+    background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+    color: #e8e8e8;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.rnk-patrol-capture-dialog .capture-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.rnk-patrol-capture-dialog .capture-header i {
+    font-size: 3em;
+    color: #e94560;
+    margin-bottom: 10px;
+}
+
+.rnk-patrol-capture-dialog .capture-header h2 {
+    margin: 0;
+    color: #fff;
+}
+
+.rnk-patrol-capture-dialog .capture-header p {
+    color: #888;
+    margin-top: 5px;
+}
+
+.rnk-patrol-capture-dialog .bribe-option {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.rnk-patrol-capture-dialog .bribe-amount {
+    font-size: 1.5em;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.rnk-patrol-capture-dialog .player-gold {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.rnk-patrol-capture-dialog .cannot-afford {
+    color: #ff4757;
+}
+
+.rnk-patrol-capture-dialog button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 5px;
+}
+
+.rnk-patrol-capture-dialog .bribe-btn {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #000;
+}
+
+.rnk-patrol-capture-dialog .bribe-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.rnk-patrol-capture-dialog .bribe-btn:disabled {
+    background: #444;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rnk-patrol-capture-dialog .surrender-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8e8e8;
+}
+
+.rnk-patrol-capture-dialog .surrender-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,216 @@
+<form class="patrol-config-form" autocomplete="off">
+    {{!-- Control Buttons --}}
+    <div class="actions-bar" style="margin-bottom: 15px;">
+        {{#if isActive}}
+            <button type="button" data-action="pause" class="warning">
+                <i class="fas fa-pause"></i> {{localize "rnk-patrol.buttons.pause"}}
+            </button>
+            <button type="button" data-action="stop" class="danger">
+                <i class="fas fa-stop"></i> {{localize "rnk-patrol.buttons.stop"}}
+            </button>
+        {{else if isPaused}}
+            <button type="button" data-action="resume" class="success">
+                <i class="fas fa-play"></i> {{localize "rnk-patrol.buttons.resume"}}
+            </button>
+            <button type="button" data-action="stop" class="danger">
+                <i class="fas fa-stop"></i> {{localize "rnk-patrol.buttons.stop"}}
+            </button>
+        {{else}}
+            <button type="button" data-action="start" class="success">
+                <i class="fas fa-play"></i> {{localize "rnk-patrol.buttons.start"}}
+            </button>
+        {{/if}}
+        <div style="flex: 1;"></div>
+        <button type="button" data-action="pan-to-token" class="secondary" title="{{localize 'rnk-patrol.apps.config.panToToken'}}">
+            <i class="fas fa-crosshairs"></i>
+        </button>
+        <button type="button" data-action="delete" class="danger">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+
+    {{!-- Tabs --}}
+    <nav class="tabs" data-group="primary">
+        <a class="item active" data-tab="general">
+            <i class="fas fa-cog"></i> {{localize "rnk-patrol.apps.config.tabs.general"}}
+        </a>
+        <a class="item" data-tab="waypoints">
+            <i class="fas fa-map-pin"></i> {{localize "rnk-patrol.apps.config.tabs.waypoints"}}
+        </a>
+        <a class="item" data-tab="timing">
+            <i class="fas fa-clock"></i> {{localize "rnk-patrol.apps.config.tabs.timing"}}
+        </a>
+        <a class="item" data-tab="detection">
+            <i class="fas fa-eye"></i> {{localize "rnk-patrol.apps.config.tabs.detection"}}
+        </a>
+    </nav>
+
+    {{!-- Tab Content --}}
+    <section class="content">
+        {{!-- General Tab --}}
+        <div class="tab-content active" data-tab="general" data-group="primary">
+            <div class="form-group">
+                <label for="name">{{localize "rnk-patrol.fields.name"}}</label>
+                <input type="text" name="name" value="{{patrol.name}}">
+            </div>
+
+            <div class="form-group">
+                <label for="tokenId">{{localize "rnk-patrol.fields.token"}}</label>
+                <select name="tokenId">
+                    <option value="">-- {{localize "rnk-patrol.apps.config.selectToken"}} --</option>
+                    {{#each tokens}}
+                    <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="mode">{{localize "rnk-patrol.fields.mode"}}</label>
+                <select name="mode">
+                    {{#each modes}}
+                    <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="blinkPattern">{{localize "rnk-patrol.fields.blinkPattern"}}</label>
+                <select name="blinkPattern">
+                    {{#each patterns}}
+                    <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="effectType">{{localize "rnk-patrol.fields.effectType"}}</label>
+                <select name="effectType">
+                    {{#each effectTypes}}
+                    <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="color">{{localize "rnk-patrol.fields.color"}}</label>
+                <input type="color" name="color" value="{{patrol.color}}">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="disabled" {{#if patrol.disabled}}checked{{/if}}>
+                    {{localize "rnk-patrol.fields.disabled"}}
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">{{localize "rnk-patrol.fields.notes"}}</label>
+                <textarea name="notes" rows="3">{{patrol.notes}}</textarea>
+            </div>
+        </div>
+
+        {{!-- Waypoints Tab --}}
+        <div class="tab-content" data-tab="waypoints" data-group="primary">
+            <p style="font-size: 0.85em; color: #888; margin-bottom: 10px;">
+                {{localize "rnk-patrol.apps.config.waypointHelp"}}
+            </p>
+            <div class="waypoint-list">
+                {{#each waypoints}}
+                <div class="waypoint-item" draggable="true" data-waypoint-id="{{id}}">
+                    <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                    <input type="checkbox" name="waypoints" value="{{id}}" {{#if selected}}checked{{/if}}>
+                    <span class="waypoint-name">{{name}}</span>
+                    {{#if selected}}
+                    <span style="color: var(--rnk-patrol-success); font-size: 0.8em;">
+                        #{{order}}
+                    </span>
+                    {{/if}}
+                </div>
+                {{else}}
+                <div style="text-align: center; padding: 15px; color: #666;">
+                    {{localize "rnk-patrol.apps.config.noWaypoints"}}
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        {{!-- Timing Tab --}}
+        <div class="tab-content" data-tab="timing" data-group="primary">
+            <div class="form-group">
+                <label for="appearDuration">{{localize "rnk-patrol.fields.appearDuration"}}</label>
+                <div class="range-group">
+                    <input type="range" name="appearDuration" min="1" max="30" step="0.5" value="{{patrol.appearDuration}}">
+                    <span class="range-value">{{patrol.appearDuration}}s</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="disappearDuration">{{localize "rnk-patrol.fields.disappearDuration"}}</label>
+                <div class="range-group">
+                    <input type="range" name="disappearDuration" min="0.5" max="15" step="0.5" value="{{patrol.disappearDuration}}">
+                    <span class="range-value">{{patrol.disappearDuration}}s</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="timingVariance">{{localize "rnk-patrol.fields.timingVariance"}}</label>
+                <div class="range-group">
+                    <input type="range" name="timingVariance" min="0" max="100" step="5" value="{{patrol.timingVariance}}">
+                    <span class="range-value">{{patrol.timingVariance}}%</span>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Detection Tab --}}
+        <div class="tab-content" data-tab="detection" data-group="primary">
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="detectEnabled" {{#if patrol.detectEnabled}}checked{{/if}}>
+                    {{localize "rnk-patrol.fields.detectEnabled"}}
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="detectionAction">{{localize "rnk-patrol.fields.detectionAction"}}</label>
+                <select name="detectionAction">
+                    {{#each detectionActions}}
+                    <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group macro-group" style="{{#unless (eq patrol.detectionAction 'macro')}}display: none;{{/unless}}">
+                <label for="detectionMacro">{{localize "rnk-patrol.fields.detectionMacro"}}</label>
+                <select name="detectionMacro">
+                    <option value="">-- {{localize "rnk-patrol.apps.config.selectMacro"}} --</option>
+                    {{#each macros}}
+                    <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <h4>{{localize "rnk-patrol.apps.config.currentAlert"}}</h4>
+                <p style="font-size: 1.5em; color: {{#if patrol.alertLevel}}var(--rnk-patrol-danger){{else}}var(--rnk-patrol-success){{/if}};">
+                    {{patrol.alertLevel}}
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="sheet-footer flexrow">
+        <button type="submit">
+            <i class="fas fa-save"></i> {{localize "rnk-patrol.buttons.save"}}
+        </button>
+    </footer>
+</form>
+
+<script>
+// Range slider value display
+document.querySelectorAll('.patrol-config-form input[type="range"]').forEach(input => {
+    const valueSpan = input.parentElement.querySelector('.range-value');
+    input.addEventListener('input', () => {
+        valueSpan.textContent = input.value + (input.name.includes('Variance') ? '%' : 's');
+    });
+});
+</script>

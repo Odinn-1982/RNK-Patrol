@@ -1,0 +1,184 @@
+<form class="patrol-creator-form">
+    <h3>{{localize "rnk-patrol.apps.creator.basicInfo"}}</h3>
+    
+    <div class="form-group">
+        <label for="name">{{localize "rnk-patrol.fields.name"}}</label>
+        <input type="text" name="name" value="{{name}}" placeholder="{{localize 'rnk-patrol.apps.creator.namePlaceholder'}}">
+    </div>
+
+    <div class="form-group">
+        <label for="tokenId">{{localize "rnk-patrol.fields.token"}}</label>
+        <select name="tokenId">
+            <option value="">-- {{localize "rnk-patrol.apps.creator.selectToken"}} --</option>
+            {{#each tokens}}
+            <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+            {{/each}}
+        </select>
+    </div>
+
+    <h3>{{localize "rnk-patrol.apps.creator.patrolType"}}</h3>
+
+    <div class="form-group">
+        <label for="mode">{{localize "rnk-patrol.fields.mode"}}</label>
+        <select name="mode">
+            {{#each modes}}
+            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+        </select>
+    </div>
+
+    <div class="form-group pattern-group">
+        <label for="blinkPattern">{{localize "rnk-patrol.fields.blinkPattern"}}</label>
+        <select name="blinkPattern">
+            {{#each patterns}}
+            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+        </select>
+    </div>
+
+    <h3><i class="fas fa-map-marker-alt"></i> Patrol Waypoints</h3>
+    
+    {{!-- Waypoint Placement Controls --}}
+    <div class="waypoint-controls">
+        {{#if isPlacingWaypoints}}
+        <div class="placement-active">
+            <i class="fas fa-crosshairs fa-spin"></i>
+            <span>Click on map to place waypoints...</span>
+        </div>
+        <button type="button" data-action="stop-placement" class="stop-placement-btn">
+            <i class="fas fa-check"></i> Done Placing
+        </button>
+        {{else}}
+        <button type="button" data-action="start-placement" class="start-placement-btn">
+            <i class="fas fa-plus-circle"></i> Start Placing Waypoints
+        </button>
+        {{/if}}
+    </div>
+
+    {{!-- Session Waypoints - Created in this session --}}
+    <div class="waypoint-section session-waypoints">
+        <h4>
+            <i class="fas fa-map-pin"></i> 
+            New Waypoints 
+            <span class="waypoint-count">({{waypointCount}})</span>
+            {{#unless canSave}}<span class="need-more">(Need at least 2)</span>{{/unless}}
+        </h4>
+        
+        {{#if hasSessionWaypoints}}
+        <div class="waypoint-list">
+            {{#each sessionWaypoints}}
+            <div class="waypoint-item session-item" data-waypoint-id="{{id}}">
+                <span class="waypoint-index">{{index}}</span>
+                <span class="waypoint-name">{{name}}</span>
+                <span class="waypoint-coords">({{x}}, {{y}})</span>
+                <button type="button" class="waypoint-delete" data-action="delete-waypoint" data-waypoint-id="{{id}}" title="Delete waypoint">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            {{/each}}
+        </div>
+        <button type="button" data-action="clear-waypoints" class="clear-waypoints-btn">
+            <i class="fas fa-times"></i> Clear All
+        </button>
+        {{else}}
+        <div class="no-waypoints">
+            <i class="fas fa-info-circle"></i>
+            <p>No waypoints yet. Click "Start Placing Waypoints" to begin.</p>
+        </div>
+        {{/if}}
+    </div>
+
+    {{!-- Existing Waypoints - Optional selection --}}
+    {{#if hasExistingWaypoints}}
+    <div class="waypoint-section existing-waypoints">
+        <h4><i class="fas fa-folder-open"></i> Use Existing Waypoints (Optional)</h4>
+        <p class="help-text">Select existing waypoints to include in this patrol:</p>
+        <div class="waypoint-list existing-list">
+            {{#each existingWaypoints}}
+            <div class="waypoint-item existing-item {{#if unassigned}}unassigned{{/if}}">
+                <input type="checkbox" name="existingWaypoints" value="{{id}}" id="existing-{{id}}">
+                <label for="existing-{{id}}">
+                    <span class="waypoint-name">{{name}}</span>
+                    {{#if unassigned}}
+                    <span class="unassigned-badge" title="Not assigned to any patrol">
+                        <i class="fas fa-star"></i>
+                    </span>
+                    {{/if}}
+                </label>
+                <button type="button" class="waypoint-delete" data-action="delete-existing-waypoint" data-waypoint-id="{{id}}" title="Delete waypoint">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    {{/if}}
+
+    <h3>{{localize "rnk-patrol.apps.creator.timing"}}</h3>
+
+    <div class="form-group">
+        <label for="appearDuration">{{localize "rnk-patrol.fields.appearDuration"}}</label>
+        <div class="range-group">
+            <input type="range" name="appearDuration" min="1" max="30" step="0.5" value="{{appearDuration}}">
+            <span class="range-value">{{appearDuration}}s</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="disappearDuration">{{localize "rnk-patrol.fields.disappearDuration"}}</label>
+        <div class="range-group">
+            <input type="range" name="disappearDuration" min="0.5" max="15" step="0.5" value="{{disappearDuration}}">
+            <span class="range-value">{{disappearDuration}}s</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="timingVariance">{{localize "rnk-patrol.fields.timingVariance"}}</label>
+        <div class="range-group">
+            <input type="range" name="timingVariance" min="0" max="100" step="5" value="{{timingVariance}}">
+            <span class="range-value">{{timingVariance}}%</span>
+        </div>
+    </div>
+
+    <h3>{{localize "rnk-patrol.apps.creator.effects"}}</h3>
+
+    <div class="form-group">
+        <label for="effectType">{{localize "rnk-patrol.fields.effectType"}}</label>
+        <select name="effectType">
+            {{#each effectTypes}}
+            <option value="{{value}}">{{label}}</option>
+            {{/each}}
+        </select>
+    </div>
+
+    <h3>{{localize "rnk-patrol.apps.creator.detection"}}</h3>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" name="detectEnabled" checked>
+            {{localize "rnk-patrol.fields.detectEnabled"}}
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label for="detectionAction">{{localize "rnk-patrol.fields.detectionAction"}}</label>
+        <select name="detectionAction">
+            <option value="notify">{{localize "rnk-patrol.detectionTriggers.notify"}}</option>
+            <option value="alert">{{localize "rnk-patrol.detectionTriggers.alert"}}</option>
+            <option value="combat">{{localize "rnk-patrol.detectionTriggers.combat"}}</option>
+            <option value="macro">{{localize "rnk-patrol.detectionTriggers.macro"}}</option>
+            <option value="none">{{localize "rnk-patrol.detectionTriggers.none"}}</option>
+        </select>
+    </div>
+
+    <footer class="sheet-footer">
+        <div class="footer-buttons">
+            <button type="submit" {{#unless canSave}}disabled{{/unless}}>
+                <i class="fas fa-save"></i> Save Patrol
+            </button>
+            <button type="button" data-action="save-and-start" {{#unless canSave}}disabled{{/unless}} class="save-start-btn">
+                <i class="fas fa-play"></i> Save &amp; Start
+            </button>
+        </div>
+    </footer>
+</form>

@@ -1,0 +1,651 @@
+{
+    "rnk-patrol": {
+        "title": "RNK Patrol",
+        "description": "Advanced patrol system with teleporting guards",
+
+        "settings": {
+            "enabled": {
+                "name": "Enable Module",
+                "hint": "Master toggle to enable or disable all patrol functionality."
+            },
+            "gmOnly": {
+                "name": "GM Only",
+                "hint": "Restrict patrol management to the GM only. Players will still see patrol effects."
+            },
+            "defaultMode": {
+                "name": "Default Patrol Mode",
+                "hint": "The default mode for newly created patrols.",
+                "choices": {
+                    "blink": "Blink (Teleport)",
+                    "walk": "Walk (Traditional)",
+                    "hybrid": "Hybrid"
+                }
+            },
+            "defaultPattern": {
+                "name": "Default Blink Pattern",
+                "hint": "The default blink pattern for new patrols using blink mode.",
+                "choices": {
+                    "sequential": "Sequential",
+                    "random": "Random",
+                    "weighted": "Weighted",
+                    "pingPong": "Ping-Pong"
+                }
+            },
+            "defaultAppearDuration": {
+                "name": "Default Appear Duration",
+                "hint": "Default time (in seconds) a token appears at a waypoint."
+            },
+            "defaultDisappearDuration": {
+                "name": "Default Disappear Duration",
+                "hint": "Default time (in seconds) a token remains invisible between waypoints."
+            },
+            "showWaypoints": {
+                "name": "Show Waypoints to GM",
+                "hint": "Display waypoint markers on the canvas for the GM."
+            },
+            "waypointOpacity": {
+                "name": "Waypoint Opacity",
+                "hint": "Opacity of waypoint markers (0-1)."
+            },
+            "defaultEffectType": {
+                "name": "Default Effect Type",
+                "hint": "Default visual effect for appear/disappear animations.",
+                "choices": {
+                    "fade": "Fade",
+                    "flash": "Flash",
+                    "particles": "Particles",
+                    "glitch": "Glitch",
+                    "shadow": "Shadow Step",
+                    "arcane": "Arcane Portal"
+                }
+            },
+            "effectIntensity": {
+                "name": "Effect Intensity",
+                "hint": "Intensity of visual effects (0-1)."
+            },
+            "playSound": {
+                "name": "Play Sounds",
+                "hint": "Play sound effects when tokens appear/disappear."
+            },
+            "defaultDetectionRadius": {
+                "name": "Default Detection Radius",
+                "hint": "Default detection radius for patrol tokens (in grid units)."
+            },
+            "debugMode": {
+                "name": "Debug Mode",
+                "hint": "Enable debug logging and visualization tools."
+            }
+        },
+
+        "modes": {
+            "blink": "Blink",
+            "walk": "Walk",
+            "hybrid": "Hybrid"
+        },
+
+        "patrolModes": {
+            "blink": "Blink (Teleport)",
+            "walk": "Walk (Traditional)",
+            "hybrid": "Hybrid"
+        },
+
+        "blinkPatterns": {
+            "sequential": "Sequential",
+            "random": "Random",
+            "weighted": "Weighted Random",
+            "pingPong": "Ping-Pong",
+            "priority": "Priority Based"
+        },
+
+        "patterns": {
+            "sequential": "Sequential",
+            "random": "Random",
+            "weighted": "Weighted",
+            "pingPong": "Ping-Pong"
+        },
+
+        "effects": {
+            "fade": "Fade",
+            "flash": "Flash",
+            "particles": "Particles",
+            "glitch": "Glitch",
+            "shadow": "Shadow Step",
+            "arcane": "Arcane Portal"
+        },
+
+        "effectTypes": {
+            "fade": "Fade In/Out",
+            "flash": "Flash",
+            "smoke": "Smoke Cloud",
+            "portal": "Portal",
+            "shadow": "Shadow Step",
+            "glitch": "Glitch Effect",
+            "none": "None"
+        },
+
+        "detectionTriggers": {
+            "notify": "Notify GM",
+            "alert": "Raise Alert",
+            "combat": "Start Combat",
+            "macro": "Run Macro",
+            "none": "Do Nothing"
+        },
+
+        "waypointVisibility": {
+            "always": "Always Show",
+            "gm": "GM Only",
+            "hover": "On Hover",
+            "never": "Never Show"
+        },
+
+        "alerts": {
+            "idle": "Idle",
+            "alert": "Alert",
+            "combat": "Combat",
+            "investigating": "Investigating"
+        },
+
+        "status": {
+            "label": "Status",
+            "stopped": "Stopped",
+            "running": "Running",
+            "paused": "Paused"
+        },
+
+        "fields": {
+            "name": "Name",
+            "token": "Token",
+            "mode": "Patrol Mode",
+            "blinkPattern": "Blink Pattern",
+            "effectType": "Effect Type",
+            "color": "Color",
+            "disabled": "Disabled",
+            "notes": "Notes",
+            "waypoints": "Waypoints",
+            "appearDuration": "Appear Duration",
+            "disappearDuration": "Disappear Duration",
+            "timingVariance": "Timing Variance",
+            "detectEnabled": "Enable Detection",
+            "detectionAction": "On Detection",
+            "detectionMacro": "Detection Macro"
+        },
+
+        "apps": {
+            "manager": {
+                "title": "Patrol Manager",
+                "searchPlaceholder": "Search patrols...",
+                "filterAll": "All",
+                "filterActive": "Active",
+                "filterInactive": "Inactive",
+                "empty": "No patrols found. Create your first patrol!",
+                "stats": {
+                    "total": "Total",
+                    "active": "Active",
+                    "paused": "Paused"
+                }
+            },
+            "creator": {
+                "title": "Create Patrol",
+                "basicInfo": "Basic Information",
+                "waypointsSection": "Waypoints",
+                "timingSection": "Timing Configuration",
+                "effectsSection": "Visual Effects",
+                "namePlaceholder": "Enter patrol name...",
+                "noTokens": "No suitable tokens on this scene",
+                "noWaypoints": "Click waypoints on the canvas or drag to reorder",
+                "addWaypointsHelp": "Hold Shift and click on the canvas to add waypoints",
+                "defaultName": "New Patrol",
+                "selectToken": "Select Token",
+                "patrolType": "Patrol Type",
+                "waypoints": "Waypoints",
+                "timing": "Timing",
+                "effects": "Effects",
+                "detection": "Detection",
+                "startNow": "Start Patrol?",
+                "startNowContent": "Would you like to start this patrol immediately?",
+                "createWaypoint": "Create Waypoint",
+                "waypointHelp": "Select waypoints for this patrol route."
+            },
+            "config": {
+                "title": "Configure Patrol",
+                "tabs": {
+                    "general": "General",
+                    "waypoints": "Waypoints",
+                    "timing": "Timing",
+                    "detection": "Detection"
+                },
+                "selectToken": "Select a token",
+                "waypointHelp": "Drag to reorder. Check to include in patrol.",
+                "noWaypoints": "No waypoints defined. Add waypoints first.",
+                "selectMacro": "Select a macro",
+                "currentAlert": "Current Alert Level",
+                "panToToken": "Pan to Token"
+            },
+            "assignment": {
+                "title": "Assign Patrol",
+                "description": "Assign this token to an existing patrol route.",
+                "currentPatrol": "Current Patrol",
+                "noPatrol": "Not assigned to any patrol",
+                "selectPatrol": "Select Patrol",
+                "noAssignment": "No Assignment",
+                "inUse": "in use",
+                "orCreate": "Or create a new patrol for this token:",
+                "patrolPreview": "Patrol Preview"
+            },
+            "hub": {
+                "title": "Patrol Command Center",
+                "subtitle": "GM Hub",
+                "stats": {
+                    "total": "Total Patrols",
+                    "active": "Active",
+                    "paused": "Paused",
+                    "alert": "On Alert",
+                    "coverage": "Coverage"
+                },
+                "tabs": {
+                    "patrols": "Patrols",
+                    "tokens": "Quick Setup",
+                    "activity": "Activity",
+                    "settings": "Settings"
+                },
+                "quickSetup": {
+                    "title": "Quick Patrol Setup",
+                    "description": "Click a token to instantly create a patrol for it"
+                },
+                "noPatrols": {
+                    "title": "No Patrols Found",
+                    "description": "Create your first patrol to get started!"
+                },
+                "noTokens": "No tokens on this scene",
+                "noActivity": "No recent activity",
+                "importExport": "Import / Export",
+                "moduleSettings": "Module Settings",
+                "about": "About"
+            }
+        },
+
+        "buttons": {
+            "create": "Create",
+            "createPatrol": "Create Patrol",
+            "save": "Save Changes",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "start": "Start",
+            "stop": "Stop",
+            "pause": "Pause",
+            "resume": "Resume",
+            "startAll": "Start All",
+            "stopAll": "Stop All",
+            "assign": "Assign",
+            "configure": "Configure",
+            "export": "Export",
+            "import": "Import"
+        },
+
+        "notifications": {
+            "patrolCreated": "Patrol '{name}' created successfully.",
+            "patrolDeleted": "Patrol '{name}' deleted.",
+            "patrolStarted": "Patrol '{name}' started.",
+            "patrolStopped": "Patrol '{name}' stopped.",
+            "patrolPaused": "Patrol '{name}' paused.",
+            "patrolResumed": "Patrol '{name}' resumed.",
+            "settingsSaved": "Patrol settings saved.",
+            "tokenAssigned": "Token assigned to patrol.",
+            "tokenUnassigned": "Token removed from patrol.",
+            "noToken": "No token selected for this patrol.",
+            "noWaypoints": "This patrol has no waypoints defined.",
+            "minWaypoints": "A patrol needs at least 2 waypoints.",
+            "needWaypoints": "You need at least 2 waypoints to create a patrol.",
+            "needToken": "Please select a token for this patrol.",
+            "clickToPlace": "Click on the canvas to place a waypoint.",
+            "gmOnly": "Only the GM can manage patrols.",
+            "moduleDisabled": "RNK Patrol is currently disabled.",
+            "importSuccess": "Patrols imported successfully.",
+            "importFailed": "Failed to import patrols.",
+            "exportSuccess": "Patrols exported to clipboard.",
+            "allStarted": "All patrols started.",
+            "allStopped": "All patrols stopped."
+        },
+
+        "dialogs": {
+            "deleteConfirm": {
+                "title": "Delete Patrol",
+                "content": "Are you sure you want to delete the patrol '{name}'? This cannot be undone."
+            },
+            "stopConfirm": {
+                "title": "Stop All Patrols",
+                "content": "Are you sure you want to stop all active patrols?"
+            }
+        },
+
+        "tooltips": {
+            "addWaypoint": "Add Waypoint",
+            "removeWaypoint": "Remove Waypoint",
+            "editPatrol": "Edit Patrol",
+            "deletePatrol": "Delete Patrol",
+            "togglePatrol": "Toggle Patrol",
+            "panToToken": "Pan to Token Location"
+        },
+
+        "detection": {
+            "actions": {
+                "none": "None",
+                "alert": "Raise Alert",
+                "pause": "Pause Patrol",
+                "pursue": "Pursue Target",
+                "macro": "Run Macro"
+            },
+            "detected": "{patrol} detected {target}!",
+            "alertRaised": "{patrol} is now on alert!",
+            "pursuing": "{patrol} is pursuing {target}!"
+        },
+
+        "waypoint": {
+            "default": "Waypoint {number}",
+            "created": "Waypoint created at ({x}, {y})",
+            "removed": "Waypoint removed"
+        },
+
+        "controls": {
+            "title": "Patrol Controls",
+            "hub": "Open Patrol Command Center",
+            "manager": "Open Patrol Manager",
+            "createWaypoint": "Create Waypoint",
+            "tools": {
+                "manager": "Open Patrol Manager",
+                "waypoint": "Waypoint Tool",
+                "debug": "Debug Patrols"
+            }
+        },
+
+        "keybindings": {
+            "openHub": {
+                "name": "Open Patrol Command Hub",
+                "hint": "Opens the GM Patrol Command Center (default: 5)"
+            },
+            "openManager": {
+                "name": "Open Patrol Manager",
+                "hint": "Opens the patrol manager window"
+            },
+            "togglePaused": {
+                "name": "Toggle All Patrols",
+                "hint": "Pause or resume all active patrols"
+            }
+        },
+
+        "context": {
+            "assignPatrol": "Assign Patrol",
+            "removePatrol": "Remove from Patrol",
+            "quickPatrol": "Quick Patrol Setup"
+        },
+
+        "errors": {
+            "noScene": "No active scene. Please open a scene first.",
+            "tokenNotFound": "Token not found on the current scene.",
+            "patrolNotFound": "Patrol not found.",
+            "waypointNotFound": "Waypoint not found.",
+            "invalidConfig": "Invalid patrol configuration.",
+            "saveFailed": "Failed to save patrol data.",
+            "loadFailed": "Failed to load patrol data."
+        },
+
+        "debug": {
+            "title": "Patrol Debug",
+            "patrolState": "Patrol State",
+            "waypointData": "Waypoint Data",
+            "timingInfo": "Timing Information",
+            "effectsInfo": "Effects Information",
+            "refresh": "Refresh Debug Info"
+        },
+
+        "capture": {
+            "title": "Capture System",
+            "detected": "{patrol} has captured {target}!",
+            "outcomes": {
+                "combat": "Combat",
+                "theft": "Theft & Release",
+                "relocate": "Blindfold & Relocate",
+                "disregard": "Disregard",
+                "jail": "Send to Jail"
+            },
+            "outcomeDescriptions": {
+                "combat": "Guard attacks the player",
+                "theft": "Guard steals gold/items and releases player",
+                "relocate": "Player is blindfolded and moved to random location",
+                "disregard": "Guard lets player go with a warning",
+                "jail": "Player is sent to a jail cell"
+            },
+            "bribery": {
+                "title": "Bribery",
+                "attempt": "Attempt Bribery",
+                "offer": "Offer {amount} gold",
+                "success": "The guard accepts your bribe and looks the other way.",
+                "reject": "The guard refuses your bribe!",
+                "doublecross": "The guard takes your gold AND arrests you!",
+                "generous": "The guard is impressed by your generosity and returns some gold.",
+                "notEnough": "You don't have enough gold for a bribe.",
+                "disabled": "Bribery is disabled."
+            },
+            "dialog": {
+                "title": "You've Been Caught!",
+                "description": "A guard has spotted you! What do you do?",
+                "attemptBribe": "Attempt Bribe",
+                "surrender": "Surrender",
+                "resist": "Resist"
+            },
+            "notifications": {
+                "captured": "{player} was captured by {patrol}!",
+                "released": "{player} was released.",
+                "relocated": "{player} was blindfolded and moved to a new location.",
+                "jailed": "{player} was sent to jail!",
+                "escaped": "{player} escaped from custody!"
+            }
+        },
+
+        "barks": {
+            "title": "Bark System",
+            "categories": {
+                "spawn": "Spawn Barks",
+                "despawn": "Despawn Barks",
+                "capture": "Capture Barks",
+                "disregard": "Disregard Barks",
+                "theft": "Theft Barks",
+                "bribery_accept": "Bribery Accept Barks",
+                "bribery_reject": "Bribery Reject Barks",
+                "bribery_doublecross": "Bribery Double-Cross Barks"
+            },
+            "defaults": {
+                "spawn": ["Halt!", "Who goes there?", "Stop right there!", "On patrol duty."],
+                "despawn": ["All clear.", "Moving on.", "Nothing here."],
+                "capture": ["Got you!", "You're coming with me!", "Stop resisting!"],
+                "disregard": ["Hmm, never mind.", "Carry on.", "False alarm."],
+                "theft": ["This should cover the fine.", "Consider this a tax.", "I'll be taking that."],
+                "bribery_accept": ["Very well, be on your way.", "I didn't see anything.", "Smart choice."],
+                "bribery_reject": ["How dare you!", "That won't work on me!", "Insulting!"],
+                "bribery_doublecross": ["Thanks for the gold, AND you're under arrest!", "Ha! Foolish criminal!"]
+            },
+            "settings": {
+                "customPath": "Custom Bark Audio Path",
+                "volume": "Bark Volume",
+                "cooldown": "Bark Cooldown"
+            }
+        },
+
+        "telegraph": {
+            "title": "Telegraph System",
+            "description": "Visual warning before patrol spawns",
+            "styles": {
+                "ripple": "Ripple Effect",
+                "runes": "Spinning Runes",
+                "glow": "Pulsing Glow",
+                "portal": "Portal Opening"
+            },
+            "settings": {
+                "enabled": "Enable Telegraph",
+                "style": "Telegraph Style",
+                "duration": "Telegraph Duration",
+                "color": "Telegraph Color",
+                "gmOnly": "GM Only Telegraph"
+            }
+        },
+
+        "jail": {
+            "title": "Jail System",
+            "management": "Jail Management",
+            "templates": {
+                "dungeon": "Dark Dungeon Cell",
+                "barracks": "City Barracks Holding",
+                "cavern": "Underground Cavern",
+                "tower": "Tower Prison",
+                "stocks": "Public Stocks",
+                "cage": "Hanging Cage",
+                "pit": "Pit Prison",
+                "lavish": "Lavish Noble Cell",
+                "magical": "Magical Containment",
+                "ship": "Ship Brig"
+            },
+            "templateDescriptions": {
+                "dungeon": "Classic dark and damp dungeon cell",
+                "barracks": "Standard city guard holding cell",
+                "cavern": "Natural underground prison cave",
+                "tower": "High tower prison room",
+                "stocks": "Public punishment stocks",
+                "cage": "Suspended cage prison",
+                "pit": "Deep pit prison",
+                "lavish": "Luxurious noble prison",
+                "magical": "Arcane containment cell",
+                "ship": "Ship's brig for sea crimes"
+            },
+            "actions": {
+                "sendToJail": "Send to Jail",
+                "release": "Release Prisoner",
+                "visitJail": "Visit Jail Scene",
+                "createJail": "Create Jail Scene",
+                "listPrisoners": "List Prisoners",
+                "escapeAttempt": "Attempt Escape"
+            },
+            "status": {
+                "imprisoned": "Imprisoned",
+                "escaped": "Escaped",
+                "released": "Released",
+                "timeRemaining": "Time Remaining: {time}"
+            },
+            "notifications": {
+                "created": "Jail scene '{name}' created.",
+                "sent": "{player} was sent to {jail}.",
+                "released": "{player} was released from {jail}.",
+                "escaped": "{player} escaped from {jail}!",
+                "escapeFailed": "{player} failed to escape.",
+                "noJails": "No jail scenes available. Create one first."
+            },
+            "dialog": {
+                "selectJail": "Select Jail",
+                "selectJailDescription": "Choose a jail to send the prisoner to:",
+                "escapeTitle": "Escape Attempt",
+                "escapeDescription": "Roll to attempt escape (DC {dc})"
+            }
+        },
+
+        "gmHub": {
+            "tabs": {
+                "capture": "Capture",
+                "barks": "Barks",
+                "telegraph": "Telegraph",
+                "jails": "Jails"
+            },
+            "capture": {
+                "title": "Capture System Settings",
+                "outcomeWeights": "Outcome Weights",
+                "briberySettings": "Bribery Settings",
+                "captureRange": "Capture Range (grid units)"
+            },
+            "barks": {
+                "title": "Bark Audio Settings",
+                "enableBarks": "Enable Voice Barks",
+                "volumeLabel": "Volume",
+                "testBark": "Test Bark",
+                "customPaths": "Custom Audio Paths"
+            },
+            "telegraph": {
+                "title": "Telegraph Visual Settings",
+                "enableTelegraph": "Enable Spawn Telegraph",
+                "styleLabel": "Visual Style",
+                "durationLabel": "Duration (ms)",
+                "colorLabel": "Effect Color",
+                "preview": "Preview Effect"
+            },
+            "jails": {
+                "title": "Jail Management",
+                "createFromTemplate": "Create Jail from Template",
+                "existingJails": "Existing Jail Scenes",
+                "prisoners": "Current Prisoners",
+                "noPrisoners": "No prisoners currently held",
+                "releaseAll": "Release All Prisoners"
+            }
+        }
+    },
+
+    "RNKPATROL": {
+        "Settings": {
+            "CaptureEnabled": "Enable Capture System",
+            "CaptureEnabledHint": "Enable the capture/arrest system when patrols detect players.",
+            "CaptureRange": "Capture Range",
+            "CaptureRangeHint": "Distance in grid units at which a patrol can capture a player.",
+            "BriberyEnabled": "Enable Bribery",
+            "BriberyEnabledHint": "Allow players to attempt bribing guards when caught.",
+            "BriberyBaseCost": "Bribery Base Cost",
+            "BriberyBaseCostHint": "Base gold cost to attempt a bribe.",
+            "BriberyChance": "Bribery Success Chance",
+            "BriberyChanceHint": "Base percentage chance for a bribe to succeed.",
+            
+            "BlindfoldMinDuration": "Blindfold Min Duration",
+            "BlindfoldMinDurationHint": "Minimum seconds the blindfold effect lasts.",
+            "BlindfoldMaxDuration": "Blindfold Max Duration",
+            "BlindfoldMaxDurationHint": "Maximum seconds the blindfold effect lasts.",
+            "BlindfoldPlayAudio": "Blindfold Audio",
+            "BlindfoldPlayAudioHint": "Play audio cues during blindfold/relocate.",
+            "BlindfoldFadeEffect": "Blindfold Fade Effect",
+            "BlindfoldFadeEffectHint": "Use smooth fade transitions for blindfold.",
+            
+            "TheftTargetingWeights": "Theft Targeting Weights",
+            "TheftTargetingWeightsHint": "Weights for theft target selection (currency/equipment/misc).",
+            "TheftMaxItems": "Maximum Items Stolen",
+            "TheftMaxItemsHint": "Maximum number of items a guard can steal at once.",
+            "TheftTransferToGuard": "Transfer to Guard",
+            "TheftTransferToGuardHint": "Transfer stolen items to the guard actor's inventory.",
+            "TheftNotifyPlayer": "Notify Player of Theft",
+            "TheftNotifyPlayerHint": "Show notification to player when items are stolen.",
+            
+            "BarksEnabled": "Enable Barks",
+            "BarksEnabledHint": "Play voice barks when patrols spawn, capture, etc.",
+            "BarkVolume": "Bark Volume",
+            "BarkVolumeHint": "Volume level for bark audio clips.",
+            "BarkCooldown": "Bark Cooldown",
+            "BarkCooldownHint": "Minimum time between bark sounds (milliseconds).",
+            "TelegraphEnabled": "Enable Telegraph",
+            "TelegraphEnabledHint": "Show visual warning before patrol spawns.",
+            "TelegraphStyle": "Telegraph Style",
+            "TelegraphStyleHint": "Visual style for the spawn telegraph effect.",
+            "TelegraphDuration": "Telegraph Duration",
+            "TelegraphDurationHint": "How long the telegraph effect shows before spawn (ms).",
+            "TelegraphColor": "Telegraph Color",
+            "TelegraphColorHint": "Color for telegraph visual effects.",
+            "TelegraphGMOnly": "Telegraph GM Only",
+            "TelegraphGMOnlyHint": "Only show telegraph effects to the GM.",
+            "JailEnabled": "Enable Jail System",
+            "JailEnabledHint": "Enable the jail/prison system for captured players.",
+            "JailDefaultDuration": "Default Jail Duration",
+            "JailDefaultDurationHint": "Default time players spend in jail (seconds).",
+            "JailEscapeEnabled": "Enable Escape Attempts",
+            "JailEscapeEnabledHint": "Allow prisoners to attempt escape.",
+            "JailEscapeDC": "Escape DC",
+            "JailEscapeDCHint": "Difficulty class for escape attempts."
+        },
+        "Telegraph": {
+            "Ripple": "Ripple Effect",
+            "Runes": "Spinning Runes",
+            "Glow": "Pulsing Glow",
+            "Portal": "Portal Opening"
+        }
+    }
+}

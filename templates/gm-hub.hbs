@@ -1,0 +1,623 @@
+<div class="gm-hub-container">
+    {{!-- Header with global controls --}}
+    <header class="hub-header">
+        <div class="hub-title">
+            <i class="fas fa-satellite-dish"></i>
+            <h1>Patrol Command Center</h1>
+        </div>
+        <div class="hub-global-controls">
+            <button type="button" data-action="start-all" class="hub-btn success" title="Start All Patrols">
+                <i class="fas fa-play"></i>
+            </button>
+            <button type="button" data-action="pause-all" class="hub-btn warning" title="Pause All">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button type="button" data-action="stop-all" class="hub-btn danger" title="Stop All">
+                <i class="fas fa-stop"></i>
+            </button>
+            <div class="divider"></div>
+            <button type="button" data-action="create-patrol" class="hub-btn primary" title="Create New Patrol">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" data-action="refresh" class="hub-btn" title="Refresh">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    {{!-- Statistics Dashboard --}}
+    <section class="hub-stats">
+        <div class="stat-card total">
+            <div class="stat-icon"><i class="fas fa-route"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{stats.total}}</span>
+                <span class="stat-label">Total Patrols</span>
+            </div>
+        </div>
+        <div class="stat-card active">
+            <div class="stat-icon"><i class="fas fa-play-circle"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{stats.active}}</span>
+                <span class="stat-label">Active</span>
+            </div>
+        </div>
+        <div class="stat-card paused">
+            <div class="stat-icon"><i class="fas fa-pause-circle"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{stats.paused}}</span>
+                <span class="stat-label">Paused</span>
+            </div>
+        </div>
+        <div class="stat-card alert">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{stats.alert}}</span>
+                <span class="stat-label">On Alert</span>
+            </div>
+        </div>
+        <div class="stat-card coverage">
+            <div class="stat-icon"><i class="fas fa-eye"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{stats.coverage}}%</span>
+                <span class="stat-label">Coverage</span>
+            </div>
+        </div>
+    </section>
+
+    {{!-- Tab Navigation --}}
+    <nav class="hub-tabs" data-group="hub-tabs">
+        <a class="hub-tab active" data-tab="patrols">
+            <i class="fas fa-route"></i> Patrols
+        </a>
+        <a class="hub-tab" data-tab="tokens">
+            <i class="fas fa-users"></i> Quick Setup
+        </a>
+        <a class="hub-tab" data-tab="capture">
+            <i class="fas fa-handcuffs"></i> Capture
+        </a>
+        <a class="hub-tab" data-tab="barks">
+            <i class="fas fa-volume-up"></i> Barks
+        </a>
+        <a class="hub-tab" data-tab="telegraph">
+            <i class="fas fa-broadcast-tower"></i> Telegraph
+        </a>
+        <a class="hub-tab" data-tab="jails">
+            <i class="fas fa-dungeon"></i> Jails
+        </a>
+        <a class="hub-tab" data-tab="activity">
+            <i class="fas fa-history"></i> Activity
+        </a>
+        <a class="hub-tab" data-tab="settings">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+    </nav>
+
+    {{!-- Tab Content --}}
+    <div class="hub-content">
+        {{!-- Patrols Tab --}}
+        <div class="tab active" data-tab="patrols" data-group="hub-tabs">
+            {{!-- Search and Filter Bar --}}
+            <div class="patrol-toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="patrol-search" placeholder="Search patrols...">
+                </div>
+                <div class="filter-group">
+                    <button type="button" class="filter-btn active" data-filter="all">All</button>
+                    <button type="button" class="filter-btn" data-filter="active">Active</button>
+                    <button type="button" class="filter-btn" data-filter="paused">Paused</button>
+                    <button type="button" class="filter-btn" data-filter="stopped">Stopped</button>
+                    <button type="button" class="filter-btn" data-filter="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </button>
+                </div>
+            </div>
+
+            {{!-- Patrol Grid --}}
+            <div class="patrol-grid">
+                {{#if hasPatrols}}
+                    {{#each patrols}}
+                    <div class="patrol-card {{stateClass}} {{#if isAlert}}is-alert{{/if}} {{#if (eq ../selectedPatrolId id)}}selected{{/if}}" 
+                         data-patrol-id="{{id}}" 
+                         data-patrol-name="{{name}}"
+                         data-state="{{state}}">
+                        
+                        {{!-- Status Indicator --}}
+                        <div class="patrol-status-indicator"></div>
+                        
+                        {{!-- Card Header --}}
+                        <div class="patrol-card-header">
+                            <img src="{{tokenImg}}" alt="{{tokenName}}" class="token-portrait">
+                            <div class="patrol-info">
+                                <h3 class="patrol-name">{{name}}</h3>
+                                <span class="token-name">{{tokenName}}</span>
+                            </div>
+                            <div class="mode-badge" title="{{modeLabel}}">
+                                <i class="fas {{modeIcon}}"></i>
+                            </div>
+                        </div>
+
+                        {{!-- Progress/Stats --}}
+                        <div class="patrol-card-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-map-pin"></i>
+                                <span>{{currentWaypoint}}/{{waypointCount}}</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-random"></i>
+                                <span>{{patternLabel}}</span>
+                            </div>
+                            {{#if isAlert}}
+                            <div class="stat-item alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>{{alertLabel}}</span>
+                            </div>
+                            {{/if}}
+                        </div>
+
+                        {{!-- Card Controls --}}
+                        <div class="patrol-card-controls">
+                            {{#if isActive}}
+                                <button type="button" data-action="pause-patrol" class="ctrl-btn" title="Pause">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                <button type="button" data-action="stop-patrol" class="ctrl-btn" title="Stop">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            {{else if isPaused}}
+                                <button type="button" data-action="resume-patrol" class="ctrl-btn success" title="Resume">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button type="button" data-action="stop-patrol" class="ctrl-btn" title="Stop">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            {{else}}
+                                <button type="button" data-action="start-patrol" class="ctrl-btn success" title="Start">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            {{/if}}
+                            <button type="button" data-action="pan-to-patrol" class="ctrl-btn" title="Pan to Token">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                            <button type="button" data-action="edit-patrol" class="ctrl-btn" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" data-action="delete-patrol" class="ctrl-btn danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                {{else}}
+                    <div class="no-patrols">
+                        <i class="fas fa-route"></i>
+                        <h3>No Patrols Found</h3>
+                        <p>Create your first patrol to get started!</p>
+                        <button type="button" data-action="create-patrol" class="hub-btn primary large">
+                            <i class="fas fa-plus"></i> Create Patrol
+                        </button>
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+
+        {{!-- Quick Setup Tab (Tokens) --}}
+        <div class="tab" data-tab="tokens" data-group="hub-tabs">
+            <div class="quick-setup-header">
+                <h2><i class="fas fa-magic"></i> Quick Patrol Setup</h2>
+                <p>Click a token to instantly create a patrol for it</p>
+            </div>
+            
+            <div class="token-grid">
+                {{#each sceneTokens}}
+                <div class="token-card {{#if hasPatrol}}has-patrol{{/if}}" 
+                     data-token-id="{{id}}"
+                     data-action="quick-patrol">
+                    <img src="{{img}}" alt="{{name}}">
+                    <span class="token-label">{{name}}</span>
+                    {{#if hasPatrol}}
+                    <div class="patrol-indicator">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {{/if}}
+                </div>
+                {{else}}
+                <div class="no-tokens">
+                    <i class="fas fa-ghost"></i>
+                    <p>No tokens on this scene</p>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        {{!-- Capture System Tab --}}
+        <div class="tab" data-tab="capture" data-group="hub-tabs">
+            <div class="system-settings-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-handcuffs"></i> Capture System Settings</h2>
+                    <p>Configure what happens when patrols catch players</p>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-toggle-on"></i> System Toggle</h3>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="captureEnabled" {{#if captureEnabled}}checked{{/if}}>
+                            Enable Capture System
+                        </label>
+                        <span class="setting-hint">When enabled, patrols can capture players within range</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Capture Range (grid units)</label>
+                        <input type="number" name="captureRange" value="{{captureRange}}" min="1" max="10" step="1">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-dice"></i> Outcome Weights</h3>
+                    <p class="section-hint">Adjust the probability of each capture outcome (must total 100%)</p>
+                    
+                    <div class="outcome-weights">
+                        <div class="weight-row">
+                            <label><i class="fas fa-sword"></i> Combat</label>
+                            <input type="number" name="weight-combat" value="{{outcomeWeights.combat}}" min="0" max="100">
+                            <span class="weight-percent">%</span>
+                        </div>
+                        <div class="weight-row">
+                            <label><i class="fas fa-coins"></i> Theft & Release</label>
+                            <input type="number" name="weight-theft" value="{{outcomeWeights.theft}}" min="0" max="100">
+                            <span class="weight-percent">%</span>
+                        </div>
+                        <div class="weight-row">
+                            <label><i class="fas fa-eye-slash"></i> Blindfold & Relocate</label>
+                            <input type="number" name="weight-relocate" value="{{outcomeWeights.relocate}}" min="0" max="100">
+                            <span class="weight-percent">%</span>
+                        </div>
+                        <div class="weight-row">
+                            <label><i class="fas fa-hand-paper"></i> Disregard</label>
+                            <input type="number" name="weight-disregard" value="{{outcomeWeights.disregard}}" min="0" max="100">
+                            <span class="weight-percent">%</span>
+                        </div>
+                        <div class="weight-row">
+                            <label><i class="fas fa-dungeon"></i> Send to Jail</label>
+                            <input type="number" name="weight-jail" value="{{outcomeWeights.jail}}" min="0" max="100">
+                            <span class="weight-percent">%</span>
+                        </div>
+                    </div>
+                    <div class="weight-total">
+                        Total: <span class="total-value">100</span>%
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-money-bill-wave"></i> Bribery Settings</h3>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="briberyEnabled" {{#if briberyEnabled}}checked{{/if}}>
+                            Enable Bribery
+                        </label>
+                        <span class="setting-hint">Allow players to attempt bribing guards</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Base Bribe Cost (gold)</label>
+                        <input type="number" name="briberyBaseCost" value="{{briberyBaseCost}}" min="10" max="1000" step="10">
+                    </div>
+                    <div class="setting-row">
+                        <label>Bribery Success Chance (%)</label>
+                        <input type="range" name="briberyChance" value="{{briberyChance}}" min="0" max="100" step="5">
+                        <span class="range-value">{{briberyChance}}%</span>
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <button type="button" data-action="save-capture-settings" class="hub-btn primary">
+                        <i class="fas fa-save"></i> Save Capture Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Barks Tab --}}
+        <div class="tab" data-tab="barks" data-group="hub-tabs">
+            <div class="system-settings-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-volume-up"></i> Bark Audio System</h2>
+                    <p>Configure voice lines for patrol actions</p>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-toggle-on"></i> Audio Settings</h3>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="barksEnabled" {{#if barksEnabled}}checked{{/if}}>
+                            Enable Barks
+                        </label>
+                        <span class="setting-hint">Play voice clips when patrols take actions</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Bark Volume</label>
+                        <input type="range" name="barkVolume" value="{{barkVolume}}" min="0" max="1" step="0.1">
+                        <span class="range-value">{{barkVolumePercent}}%</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Cooldown (ms)</label>
+                        <input type="number" name="barkCooldown" value="{{barkCooldown}}" min="0" max="10000" step="500">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-folder-open"></i> Bark Categories</h3>
+                    <p class="section-hint">Custom audio paths for each bark category. Leave empty to use defaults.</p>
+                    
+                    <div class="bark-categories">
+                        {{#each barkCategories}}
+                        <div class="bark-category">
+                            <label><i class="{{icon}}"></i> {{label}}</label>
+                            <div class="bark-path-row">
+                                <input type="text" name="bark-path-{{key}}" value="{{path}}" placeholder="modules/rnk-patrol/assets/audio/barks/{{key}}/">
+                                <button type="button" data-action="test-bark" data-category="{{key}}" class="hub-btn small" title="Test">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button type="button" data-action="browse-bark" data-category="{{key}}" class="hub-btn small" title="Browse">
+                                    <i class="fas fa-folder"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <button type="button" data-action="save-bark-settings" class="hub-btn primary">
+                        <i class="fas fa-save"></i> Save Bark Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Telegraph Tab --}}
+        <div class="tab" data-tab="telegraph" data-group="hub-tabs">
+            <div class="system-settings-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-broadcast-tower"></i> Telegraph Visual System</h2>
+                    <p>Configure visual warnings before patrol spawns</p>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-toggle-on"></i> Telegraph Settings</h3>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="telegraphEnabled" {{#if telegraphEnabled}}checked{{/if}}>
+                            Enable Telegraph
+                        </label>
+                        <span class="setting-hint">Show visual warning before patrol appears</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="telegraphGMOnly" {{#if telegraphGMOnly}}checked{{/if}}>
+                            GM Only
+                        </label>
+                        <span class="setting-hint">Only show telegraph effects to the GM</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-paint-brush"></i> Visual Style</h3>
+                    <div class="setting-row">
+                        <label>Effect Style</label>
+                        <select name="telegraphStyle">
+                            <option value="ripple" {{#if (eq telegraphStyle "ripple")}}selected{{/if}}>Ripple Effect</option>
+                            <option value="runes" {{#if (eq telegraphStyle "runes")}}selected{{/if}}>Spinning Runes</option>
+                            <option value="glow" {{#if (eq telegraphStyle "glow")}}selected{{/if}}>Pulsing Glow</option>
+                            <option value="portal" {{#if (eq telegraphStyle "portal")}}selected{{/if}}>Portal Opening</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Duration (ms)</label>
+                        <input type="range" name="telegraphDuration" value="{{telegraphDuration}}" min="500" max="3000" step="100">
+                        <span class="range-value">{{telegraphDuration}}ms</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Effect Color</label>
+                        <input type="color" name="telegraphColor" value="{{telegraphColor}}">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-eye"></i> Preview</h3>
+                    <div class="telegraph-preview">
+                        <button type="button" data-action="preview-telegraph" class="hub-btn">
+                            <i class="fas fa-play"></i> Preview Telegraph Effect
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <button type="button" data-action="save-telegraph-settings" class="hub-btn primary">
+                        <i class="fas fa-save"></i> Save Telegraph Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Jails Tab --}}
+        <div class="tab" data-tab="jails" data-group="hub-tabs">
+            <div class="system-settings-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-dungeon"></i> Jail Management</h2>
+                    <p>Create and manage jail scenes for captured players</p>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-toggle-on"></i> Jail Settings</h3>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="jailEnabled" {{#if jailEnabled}}checked{{/if}}>
+                            Enable Jail System
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label>Default Jail Duration (seconds)</label>
+                        <input type="number" name="jailDefaultDuration" value="{{jailDefaultDuration}}" min="30" max="600" step="30">
+                    </div>
+                    <div class="setting-row">
+                        <label>
+                            <input type="checkbox" name="jailEscapeEnabled" {{#if jailEscapeEnabled}}checked{{/if}}>
+                            Enable Escape Attempts
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label>Escape DC</label>
+                        <input type="number" name="jailEscapeDC" value="{{jailEscapeDC}}" min="5" max="30" step="1">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-plus-square"></i> Create Jail Scene</h3>
+                    <p class="section-hint">Select a template to create a new jail scene</p>
+                    
+                    <div class="jail-templates">
+                        {{#each jailTemplates}}
+                        <div class="jail-template" data-template="{{key}}" data-action="create-jail">
+                            <i class="{{icon}}"></i>
+                            <span class="template-name">{{name}}</span>
+                            <span class="template-desc">{{description}}</span>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-list"></i> Existing Jails</h3>
+                    <p class="section-hint">Jail scenes are created on-demand when players are captured (or you can create them manually)</p>
+                    <div class="existing-jails">
+                        {{#if jailScenes.length}}
+                            {{#each jailScenes}}
+                            <div class="jail-row" data-scene-id="{{sceneId}}">
+                                <span class="jail-name"><i class="fas fa-dungeon"></i> {{sceneName}}</span>
+                                <span class="prisoner-count">{{prisonerCount}} prisoners</span>
+                                <div class="jail-controls">
+                                    <button type="button" data-action="visit-jail" data-scene-id="{{sceneId}}" class="hub-btn small" title="Visit">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" data-action="delete-jail" data-scene-id="{{sceneId}}" class="hub-btn small danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="no-jails">
+                                <i class="fas fa-dungeon"></i>
+                                <p>No jail scenes created yet. They will be created automatically when players are sent to jail.</p>
+                            </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3><i class="fas fa-users"></i> Current Prisoners</h3>
+                    <div class="prisoner-list">
+                        {{#if prisoners.length}}
+                            {{#each prisoners}}
+                            <div class="prisoner-row" data-actor-id="{{actorId}}">
+                                <img src="{{img}}" alt="{{name}}" class="prisoner-portrait">
+                                <div class="prisoner-info">
+                                    <span class="prisoner-name">{{name}}</span>
+                                    <span class="prisoner-location">{{jailName}}</span>
+                                    <span class="time-remaining">{{timeRemaining}}</span>
+                                </div>
+                                <div class="prisoner-controls">
+                                    <button type="button" data-action="release-prisoner" data-actor-id="{{actorId}}" class="hub-btn small success" title="Release">
+                                        <i class="fas fa-unlock"></i>
+                                    </button>
+                                    <button type="button" data-action="visit-prisoner" data-actor-id="{{actorId}}" class="hub-btn small" title="Visit">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="no-prisoners">
+                                <i class="fas fa-user-check"></i>
+                                <p>No prisoners currently held</p>
+                            </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <button type="button" data-action="release-all-prisoners" class="hub-btn warning" {{#unless prisoners.length}}disabled{{/unless}}>
+                        <i class="fas fa-unlock-alt"></i> Release All Prisoners
+                    </button>
+                    <button type="button" data-action="save-jail-settings" class="hub-btn primary">
+                        <i class="fas fa-save"></i> Save Jail Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Activity Tab --}}
+        <div class="tab" data-tab="activity" data-group="hub-tabs">
+            <div class="activity-log">
+                {{#if activityLog.length}}
+                    {{#each activityLog}}
+                    <div class="activity-entry {{type}}">
+                        <span class="activity-time">{{time}}</span>
+                        <span class="activity-icon"><i class="fas {{icon}}"></i></span>
+                        <span class="activity-message">{{message}}</span>
+                    </div>
+                    {{/each}}
+                {{else}}
+                    <div class="no-activity">
+                        <i class="fas fa-history"></i>
+                        <p>No recent activity</p>
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+
+        {{!-- Settings Tab --}}
+        <div class="tab" data-tab="settings" data-group="hub-tabs">
+            <div class="hub-settings">
+                <div class="settings-group">
+                    <h3><i class="fas fa-download"></i> Import / Export</h3>
+                    <div class="settings-buttons">
+                        <button type="button" data-action="import-patrols" class="hub-btn">
+                            <i class="fas fa-file-import"></i> Import Patrols
+                        </button>
+                        <button type="button" data-action="export-patrols" class="hub-btn">
+                            <i class="fas fa-file-export"></i> Export Patrols
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3><i class="fas fa-cog"></i> Module Settings</h3>
+                    <p>Configure module-wide settings in the Foundry settings menu.</p>
+                    <button type="button" class="hub-btn" onclick="game.settings.sheet.render(true)">
+                        <i class="fas fa-sliders-h"></i> Open Settings
+                    </button>
+                </div>
+
+                <div class="settings-group">
+                    <h3><i class="fas fa-info-circle"></i> About</h3>
+                    <p><strong>RNK Patrol</strong> v{{../version}}</p>
+                    <p>Advanced patrol system with teleporting guards</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Footer --}}
+    <footer class="hub-footer">
+        <div class="mode-legend">
+            <span><i class="fas fa-bolt"></i> Blink: {{stats.blink}}</span>
+            <span><i class="fas fa-walking"></i> Walk: {{stats.walk}}</span>
+            <span><i class="fas fa-random"></i> Hybrid: {{stats.hybrid}}</span>
+        </div>
+        <div class="scene-info">
+            <i class="fas fa-map"></i> {{scene.name}}
+        </div>
+    </footer>
+</div>

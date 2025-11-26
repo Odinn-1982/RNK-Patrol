@@ -1,0 +1,71 @@
+<div class="patrol-assignment-dialog">
+    <p>{{localize "rnk-patrol.apps.assignment.description"}}</p>
+
+    {{!-- Token Preview --}}
+    <div class="token-preview">
+        <img src="{{token.img}}" alt="{{token.name}}" class="token-image">
+        <div class="token-info">
+            <h3>{{token.name}}</h3>
+            {{#if token.currentPatrol}}
+            <p class="current-patrol">
+                <span class="label">{{localize "rnk-patrol.apps.assignment.currentPatrol"}}:</span>
+                <span class="value">{{token.currentPatrol.name}}</span>
+            </p>
+            {{else}}
+            <p class="no-patrol">{{localize "rnk-patrol.apps.assignment.noPatrol"}}</p>
+            {{/if}}
+        </div>
+    </div>
+
+    {{!-- Patrol Selection --}}
+    <div class="form-group">
+        <label for="patrolId">{{localize "rnk-patrol.apps.assignment.selectPatrol"}}</label>
+        <select name="patrolId" class="patrol-select">
+            <option value="">-- {{localize "rnk-patrol.apps.assignment.noAssignment"}} --</option>
+            {{#each patrols}}
+            <option value="{{id}}" {{#if selected}}selected{{/if}} {{#if disabled}}disabled{{/if}}>
+                {{name}} {{#if tokenAssigned}}({{localize "rnk-patrol.apps.assignment.inUse"}}){{/if}}
+            </option>
+            {{/each}}
+        </select>
+    </div>
+
+    {{!-- Quick Create Option --}}
+    {{#if allowCreate}}
+    <div class="quick-create">
+        <p>{{localize "rnk-patrol.apps.assignment.orCreate"}}</p>
+        <button type="button" data-action="create-new" class="primary">
+            <i class="fas fa-plus"></i> {{localize "rnk-patrol.buttons.createPatrol"}}
+        </button>
+    </div>
+    {{/if}}
+
+    {{!-- Patrol Preview (shown when patrol selected) --}}
+    <div class="patrol-preview" style="display: none;">
+        <h4>{{localize "rnk-patrol.apps.assignment.patrolPreview"}}</h4>
+        <div class="preview-content">
+            <div class="preview-row">
+                <span class="label">{{localize "rnk-patrol.fields.mode"}}:</span>
+                <span class="value patrol-mode"></span>
+            </div>
+            <div class="preview-row">
+                <span class="label">{{localize "rnk-patrol.fields.waypoints"}}:</span>
+                <span class="value patrol-waypoints"></span>
+            </div>
+            <div class="preview-row">
+                <span class="label">{{localize "rnk-patrol.status.label"}}:</span>
+                <span class="value patrol-status"></span>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Actions --}}
+    <footer class="dialog-buttons">
+        <button type="button" data-action="cancel" class="secondary">
+            <i class="fas fa-times"></i> {{localize "rnk-patrol.buttons.cancel"}}
+        </button>
+        <button type="button" data-action="assign" class="primary">
+            <i class="fas fa-link"></i> {{localize "rnk-patrol.buttons.assign"}}
+        </button>
+    </footer>
+</div>
