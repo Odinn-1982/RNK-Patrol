@@ -67,7 +67,14 @@ export class PatrolCreatorApp extends FormApplication {
      * Get manager
      */
     get manager() {
-        return game.rnkPatrol?.manager
+        const mgr = game.rnkPatrol?.manager
+        if (!mgr) {
+            console.warn('RNK Patrol | PatrolCreatorApp.manager is null', {
+                gameRnkPatrol: game.rnkPatrol,
+                manager: game.rnkPatrol?.manager
+            })
+        }
+        return mgr
     }
     
     /**
@@ -382,6 +389,13 @@ export class PatrolCreatorApp extends FormApplication {
     _startWaypointPlacement() {
         if (this.isPlacingWaypoints) return
         
+        // Check manager exists
+        if (!this.manager) {
+            ui.notifications.error('Patrol system not initialized. Please wait for the game to fully load.')
+            console.error('RNK Patrol | PatrolCreatorApp: manager is null - game.rnkPatrol.manager not initialized')
+            return
+        }
+        
         this.isPlacingWaypoints = true
         
         // Notification
@@ -390,31 +404,46 @@ export class PatrolCreatorApp extends FormApplication {
         // Add cursor style
         document.body.classList.add('rnk-patrol-placing')
         
+        // Store reference to this for closure
+        const self = this
+        
         // Canvas click handler - place waypoints
         this._clickHandler = async (event) => {
             // Only handle left clicks
             if (event.data.button !== 0) return
+            
+            // Double-check manager still exists
+            if (!self.manager) {
+                ui.notifications.error('Patrol manager not available')
+                self._stopWaypointPlacement()
+                return
+            }
             
             const pos = event.data.getLocalPosition(canvas.stage)
             
             // Snap to grid center
             const snapped = canvas.grid.getSnappedPoint({ x: pos.x, y: pos.y }, { mode: CONST.GRID_SNAPPING_MODES.CENTER })
             
-            // Create waypoint
-            const waypoint = await this.manager.createWaypoint({
-                x: snapped.x,
-                y: snapped.y,
-                name: `Waypoint ${this.sessionWaypoints.length + 1}`
-            })
-            
-            // Add to session
-            this.sessionWaypoints.push(waypoint)
-            
-            // Refresh display (but stay in placement mode)
-            this.render(false)
-            
-            // Flash notification
-            ui.notifications.info(`Waypoint ${this.sessionWaypoints.length} placed! (${this.sessionWaypoints.length >= 2 ? 'Ready to save' : 'Need at least 2'})`)
+            try {
+                // Create waypoint
+                const waypoint = await self.manager.createWaypoint({
+                    x: snapped.x,
+                    y: snapped.y,
+                    name: `Waypoint ${self.sessionWaypoints.length + 1}`
+                })
+                
+                // Add to session
+                self.sessionWaypoints.push(waypoint)
+                
+                // Refresh display (but stay in placement mode)
+                self.render(false)
+                
+                // Flash notification
+                ui.notifications.info(`Waypoint ${self.sessionWaypoints.length} placed! (${self.sessionWaypoints.length >= 2 ? 'Ready to save' : 'Need at least 2'})`)
+            } catch (err) {
+                console.error('RNK Patrol | Failed to create waypoint:', err)
+                ui.notifications.error('Failed to create waypoint')
+            }
         }
         
         // Escape key handler - stop placement
