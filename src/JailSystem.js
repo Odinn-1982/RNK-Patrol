@@ -9,7 +9,8 @@
  * - castle.webp, thieves_guild.webp, temple.webp, military.webp, ancient.webp
  */
 
-import { MODULE_ID, debug, getSetting, setSetting } from './settings.js'
+import { MODULE_ID, debug } from './main.js'
+import { getSetting, setSetting } from './settings.js'
 
 // ==========================================
 // HARDCODED JAIL CONFIGURATIONS
