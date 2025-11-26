@@ -195,20 +195,42 @@ Hooks.once('ready', async () => {
     log('Module ready - loading systems')
     
     try {
-        // Load core classes
+        // Load core classes one by one with logging
+        log('Loading Waypoint...')
         const { Waypoint } = await import('./Waypoint.js')
+        
+        log('Loading Patrol...')
         const { Patrol } = await import('./Patrol.js')
+        
+        log('Loading PatrolManager...')
         const { PatrolManager } = await import('./PatrolManager.js')
+        
+        log('Loading PatrolEffects...')
         const { PatrolEffects } = await import('./PatrolEffects.js')
+        
+        log('Loading PatrolDetection...')
         const { PatrolDetection } = await import('./PatrolDetection.js')
+        
+        log('Loading PatrolSocket...')
         const { PatrolSocket } = await import('./PatrolSocket.js')
+        
+        log('Loading GMHubApp...')
         const { GMHubApp } = await import('./apps/GMHubApp.js')
         
         // Load new feature systems
+        log('Loading CaptureSystem...')
         const { captureSystem, CAPTURE_OUTCOMES } = await import('./CaptureSystem.js')
+        
+        log('Loading BarkSystem...')
         const { barkSystem, BARK_TYPES } = await import('./BarkSystem.js')
+        
+        log('Loading TelegraphSystem...')
         const { telegraphSystem, TELEGRAPH_TYPES } = await import('./TelegraphSystem.js')
+        
+        log('Loading JailSystem...')
         const { jailSystem, JAIL_CONFIGS } = await import('./JailSystem.js')
+        
+        log('All imports successful!')
         
         // Store in API
         moduleAPI.Waypoint = Waypoint
