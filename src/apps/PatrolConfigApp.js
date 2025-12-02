@@ -13,7 +13,12 @@ import { MODULE_ID, PATROL_MODES, BLINK_PATTERNS } from '../main.js'
  */
 export class PatrolConfigApp extends FormApplication {
     
-    constructor(patrol, options = {}) {
+    constructor(patrolOrId, options = {}) {
+        // Accept either a patrol object or a patrol ID string
+        let patrol = patrolOrId
+        if (typeof patrolOrId === 'string') {
+            patrol = game.rnkPatrol?.manager?.getPatrol(patrolOrId)
+        }
         super(patrol, options)
         this.patrol = patrol
     }
@@ -45,6 +50,12 @@ export class PatrolConfigApp extends FormApplication {
     getData(options = {}) {
         const patrol = this.patrol
         
+        // Safety check - if patrol not found, return minimal data
+        if (!patrol || typeof patrol.toJSON !== 'function') {
+            console.warn('PatrolConfigApp: Patrol not found or invalid')
+            return { patrol: null, tokens: [], waypoints: [], modes: [], blinkPatterns: [], actors: [] }
+        }
+        
         const tokens = canvas.tokens.placeables.map(t => ({
             id: t.id,
             name: t.name,
@@ -54,6 +65,10 @@ export class PatrolConfigApp extends FormApplication {
         const allWaypoints = this.manager?.getWaypoints() ?? []
         const patrolWaypointIds = new Set(patrol.waypointIds)
         
+        const actors = game.actors.contents
+            .filter(a => !a.hasPlayerOwner)
+            .map(a => ({ id: a.id, name: a.name, img: a.img }))
+
         return {
             patrol: patrol.toJSON(),
             tokens,
@@ -119,6 +134,7 @@ export class PatrolConfigApp extends FormApplication {
         Object.assign(this.patrol, {
             name: formData.name,
             tokenId: formData.tokenId,
+            guardActorId: formData.guardActorId || null,
             mode: formData.mode,
             blinkPattern: formData.blinkPattern,
             waypointIds,
@@ -132,6 +148,10 @@ export class PatrolConfigApp extends FormApplication {
             detectionMacro: formData.detectionMacro || null,
             disabled: formData.disabled ?? false,
             notes: formData.notes || ''
+            ,automateCombat: formData.automateCombat === 'on' || formData.automateCombat === true
+            ,automateDecisions: formData.automateDecisions === 'on' || formData.automateDecisions === true
+            ,automateRequireApproval: (formData.automateRequireApproval === 'inherit') ? null : (formData.automateRequireApproval === 'enabled')
+            ,aggressiveness: formData.aggressiveness || 'normal'
         })
         
         await this.patrol.save()
@@ -238,5 +258,19 @@ export class PatrolConfigApp extends FormApplication {
                 }
             })
         })
+    }
+
+    /** @override */
+    async render(force = false, options = {}) {
+        // Preserve scroll position in the tab content area across re-renders
+        const content = this.element?.find('.content')[0];
+        const scrollTop = content ? content.scrollTop : 0;
+
+        await super.render(force, options);
+
+        const newContent = this.element?.find('.content')[0];
+        if (newContent) newContent.scrollTop = scrollTop;
+
+        return this;
     }
 }

@@ -286,6 +286,179 @@ export function registerSettings() {
         default: 500,
         requiresReload: false
     })
+
+    // ==========================================
+    // Guard Source (templates vs random NPC actor)
+    // ==========================================
+    game.settings.register(MODULE_ID, 'guardSource', {
+        name: `${MODULE_ID}.settings.guardSource.name`,
+        hint: `${MODULE_ID}.settings.guardSource.hint`,
+        scope: 'world',
+        config: true,
+        type: String,
+        choices: {
+            'templates': `${MODULE_ID}.settings.guardSource.templates`,
+            'actors': `${MODULE_ID}.settings.guardSource.actors`
+        },
+        default: 'templates',
+        requiresReload: false
+    })
+
+    // Optional guard actor whitelist (comma-separated actor IDs)
+    game.settings.register(MODULE_ID, 'guardActorWhitelist', {
+        name: `${MODULE_ID}.settings.guardActorWhitelist.name`,
+        hint: `${MODULE_ID}.settings.guardActorWhitelist.hint`,
+        scope: 'world',
+        config: true,
+        type: String,
+        default: '',
+        requiresReload: false
+    })
+
+    // ==========================================
+    // AI and Automation Settings
+    // ==========================================
+    game.settings.register(MODULE_ID, 'aiProvider', {
+        name: `${MODULE_ID}.settings.aiProvider.name`,
+        hint: `${MODULE_ID}.settings.aiProvider.hint`,
+        scope: 'world',
+        config: true,
+        type: String,
+        choices: {
+            'none': `${MODULE_ID}.settings.aiProvider.none`,
+            'system': `${MODULE_ID}.settings.aiProvider.system`,
+            'openai': `${MODULE_ID}.settings.aiProvider.openai`
+        },
+        default: 'system',
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'aiApiKey', {
+        name: `${MODULE_ID}.settings.aiApiKey.name`,
+        hint: `${MODULE_ID}.settings.aiApiKey.hint`,
+        scope: 'client',
+        config: true,
+        type: String,
+        default: '',
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'automateCombat', {
+        name: `${MODULE_ID}.settings.automateCombat.name`,
+        hint: `${MODULE_ID}.settings.automateCombat.hint`,
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'combatAutomationLevel', {
+        name: `${MODULE_ID}.settings.combatAutomationLevel.name`,
+        hint: `${MODULE_ID}.settings.combatAutomationLevel.hint`,
+        scope: 'world',
+        config: true,
+        type: String,
+        choices: {
+            'assisted': `${MODULE_ID}.settings.combatAutomationLevel.assisted`,
+            'autoResolve': `${MODULE_ID}.settings.combatAutomationLevel.autoResolve`,
+            'none': `${MODULE_ID}.settings.combatAutomationLevel.none`
+        },
+        default: 'assisted',
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'automateDecisions', {
+        name: `${MODULE_ID}.settings.automateDecisions.name`,
+        hint: `${MODULE_ID}.settings.automateDecisions.hint`,
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'autoResolveAffectsPlayers', {
+        name: `${MODULE_ID}.settings.autoResolveAffectsPlayers.name`,
+        hint: `${MODULE_ID}.settings.autoResolveAffectsPlayers.hint`,
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    })
+
+    // AI Log settings
+    game.settings.register(MODULE_ID, 'aiLogMaxEntries', {
+        name: `${MODULE_ID}.settings.aiLogMaxEntries.name`,
+        hint: `${MODULE_ID}.settings.aiLogMaxEntries.hint`,
+        scope: 'world',
+        config: true,
+        type: Number,
+        range: { min: 10, max: 1000, step: 10 },
+        default: 200,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'aiLog', {
+        scope: 'world',
+        config: false,
+        type: Object,
+        default: []
+    })
+
+    game.settings.register(MODULE_ID, 'autoPerformSuggestions', {
+        name: `${MODULE_ID}.settings.autoPerformSuggestions.name`,
+        hint: `${MODULE_ID}.settings.autoPerformSuggestions.hint`,
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'automateRequireApproval', {
+        name: `${MODULE_ID}.settings.automateRequireApproval.name`,
+        hint: `${MODULE_ID}.settings.automateRequireApproval.hint`,
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'aiPendingMaxEntries', {
+        name: `${MODULE_ID}.settings.aiPendingMaxEntries.name`,
+        hint: `${MODULE_ID}.settings.aiPendingMaxEntries.hint`,
+        scope: 'world',
+        config: true,
+        type: Number,
+        range: { min: 10, max: 1000, step: 10 },
+        default: 100,
+        requiresReload: false
+    })
+
+    game.settings.register(MODULE_ID, 'aiPending', {
+        scope: 'world',
+        config: false,
+        type: Object,
+        default: []
+    })
+
+    game.settings.register(MODULE_ID, 'midiQolLoggingLevel', {
+        name: `${MODULE_ID}.settings.midiQolLoggingLevel.name`,
+        hint: `${MODULE_ID}.settings.midiQolLoggingLevel.hint`,
+        scope: 'world',
+        config: true,
+        type: String,
+        choices: {
+            none: 'none',
+            minimal: 'minimal',
+            verbose: 'verbose'
+        },
+        default: 'minimal',
+        requiresReload: false
+    })
     
     // ==========================================
     // CAPTURE SYSTEM SETTINGS
@@ -367,6 +540,65 @@ export function registerSettings() {
             step: 5
         },
         default: 70,
+        requiresReload: false
+    })
+    
+    // ------------------------------------------
+    // Bleed-Out Capture Settings
+    // ------------------------------------------
+    
+    game.settings.register(MODULE_ID, 'bleedOutEnabled', {
+        name: game.i18n.localize('RNKPATROL.Settings.BleedOutEnabled'),
+        hint: game.i18n.localize('RNKPATROL.Settings.BleedOutEnabledHint'),
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: true,
+        requiresReload: false
+    })
+    
+    game.settings.register(MODULE_ID, 'bleedOutThreshold', {
+        name: game.i18n.localize('RNKPATROL.Settings.BleedOutThreshold'),
+        hint: game.i18n.localize('RNKPATROL.Settings.BleedOutThresholdHint'),
+        scope: 'world',
+        config: true,
+        type: Number,
+        range: {
+            min: 10,
+            max: 50,
+            step: 5
+        },
+        default: 25,
+        requiresReload: false
+    })
+    
+    game.settings.register(MODULE_ID, 'bleedOutBaseDC', {
+        name: game.i18n.localize('RNKPATROL.Settings.BleedOutBaseDC'),
+        hint: game.i18n.localize('RNKPATROL.Settings.BleedOutBaseDCHint'),
+        scope: 'world',
+        config: true,
+        type: Number,
+        range: {
+            min: 5,
+            max: 20,
+            step: 1
+        },
+        default: 10,
+        requiresReload: false
+    })
+    
+    game.settings.register(MODULE_ID, 'bleedOutPlayerControl', {
+        name: game.i18n.localize('RNKPATROL.Settings.BleedOutPlayerControl'),
+        hint: game.i18n.localize('RNKPATROL.Settings.BleedOutPlayerControlHint'),
+        scope: 'world',
+        config: true,
+        type: String,
+        choices: {
+            'player': 'RNKPATROL.Settings.BleedOutPlayerControlPlayer',
+            'gm': 'RNKPATROL.Settings.BleedOutPlayerControlGM',
+            'auto': 'RNKPATROL.Settings.BleedOutPlayerControlAuto'
+        },
+        default: 'player',
         requiresReload: false
     })
     
@@ -656,8 +888,24 @@ export function registerSettings() {
         default: []
     })
     
-    // Prisoner tracking data
+    // Prisoner tracking data (legacy - single prisoner data object)
     game.settings.register(MODULE_ID, 'prisonerData', {
+        scope: 'world',
+        config: false,
+        type: Object,
+        default: {}
+    })
+    
+    // Prisoner tracking data (array format used by JailSystem)
+    game.settings.register(MODULE_ID, 'prisoners', {
+        scope: 'world',
+        config: false,
+        type: Array,
+        default: []
+    })
+    
+    // Jail customizations (guard/inmate actor assignments, spawn point overrides)
+    game.settings.register(MODULE_ID, 'jailCustomizations', {
         scope: 'world',
         config: false,
         type: Object,

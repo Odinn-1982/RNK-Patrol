@@ -1,0 +1,66 @@
+<div class="compendium-picker-container">
+    <div class="picker-header">
+        <h3>Select {{modeLabel}}</h3>
+        <p class="picker-description">
+            {{#if (eq mode "guard")}}
+            Choose an actor from your compendiums to use as a guard in jail scenes.
+            {{else if (eq mode "inmate")}}
+            Choose an actor from your compendiums to use as an inmate in jail scenes.
+            {{else}}
+            Choose an actor from your compendiums for patrol tokens.
+            {{/if}}
+        </p>
+    </div>
+
+    <div class="picker-filters">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Compendium</label>
+                <select name="compendium-pack">
+                    {{#each packOptions}}
+                    <option value="{{value}}" {{#if (eq value ../selectedPack)}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="filter-group search-group">
+                <label>Search</label>
+                <input type="text" name="actor-search" value="{{searchQuery}}" placeholder="Search actors...">
+            </div>
+        </div>
+    </div>
+
+    <div class="picker-actions-top">
+        <button type="button" data-action="clear-selection" class="btn">
+            <i class="fas fa-times"></i> Clear Selection (Use None)
+        </button>
+    </div>
+
+    <div class="actor-grid">
+        {{#if loading}}
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading actors...</p>
+        </div>
+        {{else if hasActors}}
+            {{#each actors}}
+            <div class="actor-item" 
+                 data-actor-id="{{id}}" 
+                 data-actor-name="{{name}}" 
+                 data-actor-img="{{img}}"
+                 data-actor-pack="{{pack}}"
+                 data-actor-uuid="{{uuid}}">
+                <img src="{{img}}" alt="{{name}}" class="actor-portrait">
+                <div class="actor-info">
+                    <span class="actor-name">{{name}}</span>
+                    <span class="actor-source">{{packLabel}}</span>
+                </div>
+            </div>
+            {{/each}}
+        {{else}}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>No actors found{{#if searchQuery}} matching "{{searchQuery}}"{{/if}}</p>
+        </div>
+        {{/if}}
+    </div>
+</div>

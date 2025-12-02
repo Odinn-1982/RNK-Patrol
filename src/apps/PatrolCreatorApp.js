@@ -67,20 +67,26 @@ export class PatrolCreatorApp extends FormApplication {
      * Get manager
      */
     get manager() {
-        const mgr = game.rnkPatrol?.manager
-        if (!mgr) {
-            console.warn('RNK Patrol | PatrolCreatorApp.manager is null', {
-                gameRnkPatrol: game.rnkPatrol,
-                manager: game.rnkPatrol?.manager
-            })
-        }
-        return mgr
+        return game.rnkPatrol?.manager ?? null
+    }
+    
+    /**
+     * Check if patrol system is ready
+     */
+    get isSystemReady() {
+        return !!game.rnkPatrol?.manager
     }
     
     /**
      * Called when rendered - set up waypoint click hook
      */
     render(force = false, options = {}) {
+        // Check if system is ready before rendering
+        if (!this.isSystemReady) {
+            ui.notifications.warn('Patrol system is still initializing. Please wait a moment and try again.')
+            return this
+        }
+        
         // Register waypoint click hook if not already
         if (!this._waypointClickHook) {
             this._waypointClickHook = Hooks.on('rnkPatrol.waypointClicked', (waypoint) => {
@@ -88,7 +94,16 @@ export class PatrolCreatorApp extends FormApplication {
             })
         }
         
-        return super.render(force, options)
+        // Preserve scroll position in content area across re-renders
+        const content = this.element?.find('.content')[0];
+        const scrollTop = content ? content.scrollTop : 0;
+
+        const result = super.render(force, options)
+
+        const newContent = this.element?.find('.content')[0];
+        if (newContent) newContent.scrollTop = scrollTop;
+
+        return result
     }
     
     /**

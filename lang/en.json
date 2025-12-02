@@ -75,6 +75,59 @@
                 "name": "Debug Mode",
                 "hint": "Enable debug logging and visualization tools."
             }
+            ,
+            "guardSource": {
+                "name": "Guard Source",
+                "hint": "Choose whether to use built-in guard templates or a random NPC actor for guard tokens.",
+                "choices": {
+                    "templates": "Use Guard Templates",
+                    "actors": "Use Random NPC Actors"
+                }
+            }
+            ,
+            "guardActorWhitelist": {
+                "name": "Guard Actor Whitelist",
+                "hint": "Comma-separated list of Actor IDs or names to use as the pool for random guard selection. Leave empty to use all NPC actors."
+            }
+            ,
+            "aiProvider": {
+                "name": "AI Provider",
+                "hint": "Choose which AI provider to use for automation. 'System' uses local heuristics; 'OpenAI' will use your OpenAI API key.",
+                "choices": {
+                    "none": "Disabled",
+                    "system": "System Heuristics",
+                    "openai": "OpenAI (requires API key)"
+                }
+            },
+            "aiApiKey": {
+                "name": "OpenAI API Key (Client)",
+                "hint": "Optional: Store your OpenAI API key on this client only. Only set if 'OpenAI' is selected as the AI Provider."
+            },
+            "automateDecisions": {
+                "name": "Automate Decisions",
+                "hint": "When enabled, bribery and capture decisions will be automated using the selected AI provider or system heuristics."
+            },
+            "automateCombat": {
+                "name": "Automate Combat",
+                "hint": "Enable automatic combat assistance or auto-resolve for combats initiated by the module."
+            },
+            "autoResolveAffectsPlayers": {
+                "name": "Auto-Resolve Can Affect Players",
+                "hint": "When enabled, auto-resolve will apply to player characters where necessary. Use with caution."
+            },
+            "autoPerformSuggestions": {
+                "name": "Auto-Perform Suggestions",
+                "hint": "Automatically execute AI suggestions in assisted mode for eligible patrols."
+            },
+            "combatAutomationLevel": {
+                "name": "Combat Automation Level",
+                "hint": "Select the level of automation for combat suggestions/auto-resolve.",
+                "choices": {
+                    "none": "None",
+                    "assisted": "Assisted (suggest AI actions)",
+                    "autoResolve": "Auto-Resolve Finale"
+                }
+            }
         },
 
         "modes": {
@@ -597,6 +650,18 @@
             "BriberyBaseCostHint": "Base gold cost to attempt a bribe.",
             "BriberyChance": "Bribery Success Chance",
             "BriberyChanceHint": "Base percentage chance for a bribe to succeed.",
+            
+            "BleedOutEnabled": "Enable Bleed-Out Saves",
+            "BleedOutEnabledHint": "When enabled, players at low HP must make saves or be captured.",
+            "BleedOutThreshold": "Bleed-Out Threshold (%)",
+            "BleedOutThresholdHint": "HP percentage below which bleed-out saves are required.",
+            "BleedOutBaseDC": "Bleed-Out Base DC",
+            "BleedOutBaseDCHint": "Starting difficulty for bleed-out Constitution saves.",
+            "BleedOutPlayerControl": "Bleed-Out Save Control",
+            "BleedOutPlayerControlHint": "Who receives the bleed-out dialog. Players can always choose to roll OR surrender.",
+            "BleedOutPlayerControlPlayer": "Player decides (roll or surrender)",
+            "BleedOutPlayerControlGM": "GM decides for all",
+            "BleedOutPlayerControlAuto": "Auto-roll (no choice)",
             
             "BlindfoldMinDuration": "Blindfold Min Duration",
             "BlindfoldMinDurationHint": "Minimum seconds the blindfold effect lasts.",

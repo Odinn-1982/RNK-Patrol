@@ -23,6 +23,11 @@ Six possible outcomes when a patrol catches a player:
 - 20% generous (returns some gold)
 - 10% double-cross (takes gold AND arrests)
 
+**Dynamic Scaling**: Guard difficulty scales based on:
+- Player level (from actor.system.details.level)
+- Party average level (if players share partyId flag)
+- Configurable guard templates with per-level stat scaling
+
 ### 3. Bark System (`BarkSystem.js`)
 Context-appropriate voice clips for patrol actions:
 - Spawn/Despawn barks
@@ -44,23 +49,33 @@ Visual warning effects 1-2 seconds before patrol spawns:
 Uses PIXI.js for rendering, optional JB2A integration.
 
 ### 5. Jail System (`JailSystem.js`)
-10 pre-built jail scene templates:
-1. Dark Dungeon Cell
-2. City Barracks Holding
-3. Underground Cavern
-4. Tower Prison
-5. Public Stocks
-6. Hanging Cage
-7. Pit Prison
-8. Noble Cell (Lavish)
-9. Magical Containment
-10. Ship Brig
+Jail scenes with dynamic guard spawning:
+- **jail_1**: Castle dungeon with multiple cells (bundled map + JSON)
 
 Features:
-- Auto-create jail scenes from templates
+- Auto-create jail scenes from bundled JSON exports
+- **Placeholder system**: JSON contains placeholder tokens for visual reference
+- **Dynamic guard spawning**: Guards spawn at placeholder positions when first capture occurs
+- **Scaled guards**: HP, AC, damage scale based on captured player/party level
+- **Guard templates**: `default-guard` and `elite-guard` with configurable stats
 - Track prisoners across scenes
 - Configurable jail duration
 - Escape attempt mechanics with DC
+- **Reset jail**: GM can reset guards to respawn on next capture
+
+Guard Template Stats:
+```javascript
+default-guard: {
+    baseLevel: 1, baseHp: 30, hpPerLevel: 6,
+    baseAc: 12, acPerLevel: 0.5,
+    baseDamage: 6, damagePerLevel: 1
+}
+elite-guard: {
+    baseLevel: 3, baseHp: 45, hpPerLevel: 8,
+    baseAc: 14, acPerLevel: 0.5,
+    baseDamage: 8, damagePerLevel: 1.5
+}
+```
 
 ## GM Hub
 Central command center accessible via Hotbar slot 5:
@@ -69,7 +84,7 @@ Central command center accessible via Hotbar slot 5:
 - **Capture Tab**: Configure outcome weights and bribery settings
 - **Barks Tab**: Enable/disable audio, set volume, custom paths
 - **Telegraph Tab**: Visual style, duration, color settings
-- **Jails Tab**: Create jails from templates, manage prisoners
+- **Jails Tab**: Create jails from templates, manage prisoners, reset guards
 - **Activity Tab**: Recent patrol activity log
 - **Settings Tab**: Import/Export, module configuration
 
@@ -79,6 +94,11 @@ RNK Patrol/
 ├── module.json
 ├── lang/
 │   └── en.json
+├── assets/
+│   └── maps/
+│       └── jails/
+│           ├── Jail 1.jpg (background image)
+│           └── fvtt-Scene-jail-1-*.json (scene export with placeholders)
 ├── src/
 │   ├── main.js (entry point, API)
 │   ├── settings.js

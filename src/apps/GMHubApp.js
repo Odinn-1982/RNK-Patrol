@@ -1,3 +1,4 @@
+            
 /**
  * RNK Patrol - GM Hub
  * Central command center for all patrol operations
@@ -8,34 +9,36 @@ import { getSetting, setSetting } from '../settings.js';
 
 export class GMHubApp extends Application {
     
-    constructor(options = {}) {
-        super(options);
-        
-        this.activeTab = 'overview';
-        this.selectedPatrolId = null;
-        this.refreshInterval = null;
-        this.isMinimized = false;
-        
-        // Bind methods
-        this._onPatrolUpdate = this._onPatrolUpdate.bind(this);
-    }
-
+    /** @override */
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             id: 'rnk-patrol-gm-hub',
-            title: `${MODULE_NAME} - GM Command Hub`,
+            title: game.i18n.localize(`${MODULE_ID}.apps.gmHub.title`),
             template: `modules/${MODULE_ID}/templates/gm-hub.hbs`,
             classes: ['rnk-patrol', 'gm-hub'],
-            width: 900,
+            width: 1000,
             height: 700,
-            minimizable: true,
             resizable: true,
-            tabs: [{
-                navSelector: '.hub-tabs',
-                contentSelector: '.hub-content',
-                initial: 'patrols'
-            }]
+            scrollY: ['.panel-content', '.settings-form'],
+            tabs: [{navSelector: '.nav-tabs', contentSelector: '.hub-main', initial: 'patrols'}]
         });
+    }
+    
+    constructor(options = {}) {
+        super(options);
+        this.activeTab = 'patrols';
+        this.selectedPatrolId = null;
+        this.refreshInterval = null;
+        this.isMinimized = false;
+        // When true, auto-refresh will be suspended (e.g. while editing inputs)
+        this._suspendAutoRefresh = false;
+        // Timer used to debounce scroll interactions
+        this._scrollTimer = null;
+        // Timer for deferred rendering when updates occur during suspension
+        this._deferredRenderTimer = null;
+        
+        // Bind methods
+        this._onPatrolUpdate = this._onPatrolUpdate.bind(this);
     }
 
     /** @override */
@@ -72,6 +75,12 @@ export class GMHubApp extends Application {
         const briberyBaseCost = getSetting('briberyBaseCost', 50);
         const briberyChance = getSetting('briberyChance', 70);
         
+        // Get bleed-out settings
+        const bleedOutEnabled = getSetting('bleedOutEnabled', true);
+        const bleedOutThreshold = getSetting('bleedOutThreshold', 25);
+        const bleedOutBaseDC = getSetting('bleedOutBaseDC', 12);
+        const bleedOutPlayerControl = getSetting('bleedOutPlayerControl', 'player') || 'player';
+        
         // Get bark system settings
         const barksEnabled = getSetting('barksEnabled', true);
         const barkVolume = getSetting('barkVolume', 0.5);
@@ -91,7 +100,30 @@ export class GMHubApp extends Application {
         const jailEscapeEnabled = getSetting('jailEscapeEnabled', true);
         const jailEscapeDC = getSetting('jailEscapeDC', 15);
         const jailScenes = this._getJailScenes();
+        // Get cached guard actor info for each jail scene
+        const jailSystem = game.rnkPatrol?.jailSystem
+        const jailSceneGuardInfo = jailScenes.filter(s => s.sceneId).map(s => {
+            const actor = jailSystem?.getSceneGuardActor?.(s.sceneId)
+            return {
+                sceneId: s.sceneId || '',
+                sceneName: s.sceneName || 'Unknown',
+                prisonerCount: s.prisonerCount || 0,
+                guardActorId: actor?.id || null,
+                guardActorName: actor?.name || null,
+                guardActorImg: actor?.img || null
+                ,guardActorLocked: jailSystem?.isGuardActorLocked?.(s.sceneId) || false
+            }
+        })
         const prisoners = this._getPrisoners();
+        // Sanitize aiLog entries to ensure all have required fields
+        const rawAiLog = game.rnkPatrol?.getAiLog?.() || [];
+        const aiLog = rawAiLog.map(entry => ({
+            ...entry,
+            type: entry.type || 'unknown',
+            message: entry.message || '',
+            timestamp: entry.timestamp || Date.now()
+        }));
+        const aiPending = game.rnkPatrol?.getPendingActions?.() || [];
         
         // Bark categories for UI
         const barkCategories = [
@@ -107,16 +139,7 @@ export class GMHubApp extends Application {
         
         // Jail templates (must match JAIL_CONFIGS keys in JailSystem.js)
         const jailTemplates = [
-            { key: 'dungeon', name: 'Medieval Dungeon', icon: 'fas fa-dungeon', description: 'Classic stone dungeon with iron bars' },
-            { key: 'barracks', name: 'City Guard Barracks', icon: 'fas fa-building', description: 'Military holding cells' },
-            { key: 'cavern', name: 'Underground Cavern', icon: 'fas fa-mountain', description: 'Natural cave prison' },
-            { key: 'tower', name: 'Prison Tower', icon: 'fas fa-chess-rook', description: 'Tower with multiple floors' },
-            { key: 'city_watch', name: 'City Watch Station', icon: 'fas fa-shield-alt', description: 'Official holding cells' },
-            { key: 'castle', name: 'Castle Dungeon', icon: 'fas fa-fort-awesome', description: 'Deep dungeon beneath castle' },
-            { key: 'thieves_guild', name: 'Thieves Guild', icon: 'fas fa-mask', description: 'Secret criminal prison' },
-            { key: 'temple', name: 'Temple Prison', icon: 'fas fa-place-of-worship', description: 'Sacred holding cell' },
-            { key: 'military', name: 'Military Stockade', icon: 'fas fa-crosshairs', description: 'Military prison' },
-            { key: 'ancient', name: 'Ancient Ruins', icon: 'fas fa-monument', description: 'Forgotten prison repurposed' }
+            { key: 'jail_1', name: 'Jail 1', icon: 'fas fa-dungeon', description: 'Castle dungeon with multiple cells' }
         ];
 
         return {
@@ -136,6 +159,7 @@ export class GMHubApp extends Application {
             })),
             hasPatrols: patrols.length > 0,
             isGM: game.user.isGM,
+            selectedPatrolId: this.selectedPatrolId || '',
             
             // Capture settings
             captureEnabled,
@@ -144,6 +168,22 @@ export class GMHubApp extends Application {
             briberyEnabled,
             briberyBaseCost,
             briberyChance,
+            
+            // Bleed-out settings
+            bleedOutEnabled,
+            bleedOutThreshold,
+            bleedOutBaseDC,
+            bleedOutPlayerControl,
+            
+            // Detection settings
+            enableDetection: getSetting('enableDetection', true),
+            defaultDetectionRange: getSetting('defaultDetectionRange', 5),
+            detectionTrigger: getSetting('detectionTrigger', 'notify'),
+            sightCheckMethod: getSetting('sightCheckMethod', 'ray'),
+            detectHiddenPlayers: getSetting('detectHiddenPlayers', false),
+            detectInvisible: getSetting('detectInvisible', false),
+            maxActivePatrols: getSetting('maxActivePatrols', 20),
+            updateInterval: getSetting('updateInterval', 500),
             
             // Bark settings
             barksEnabled,
@@ -165,8 +205,34 @@ export class GMHubApp extends Application {
             jailEscapeEnabled,
             jailEscapeDC,
             jailScenes,
+            jailSceneGuardInfo,
             jailTemplates,
             prisoners,
+            defaultGuardActor: this._getDefaultGuardActor(),
+            defaultInmateActor: this._getDefaultInmateActor(),
+            aiLog,
+            aiPending,
+            adapters: (game.rnkPatrol?.systemAdapters?.adapters ? Object.entries(game.rnkPatrol.systemAdapters.adapters).map(([k, a]) => ({ systemId: k, name: a.constructor?.name || 'Adapter', capabilities: Object.keys(a).filter(x => typeof a[x] === 'function').join(', ') })) : []),
+            tests: [
+                { id: 'simulatePending', name: 'Simulate Pending', desc: 'Push & pop a pending AI action using helper' },
+                { id: 'simulateBribe', name: 'Simulate Bribe', desc: 'Simulate a bribe flow using the module helper (prompts for actor/patrol if needed)' },
+                { id: 'simulateUndo', name: 'Simulate Undo', desc: 'Simulate theft and create an undo AI log entry' },
+                { id: 'simulateMultiUndo', name: 'Simulate Multi Undo', desc: 'Simulate theft removing gold and an item, then call central undo helper' },
+                { id: 'adapterTest', name: 'Adapter Diagnostic', desc: 'Run the adapter test for the currently selected token' },
+                { id: 'midiTest', name: 'MidiQOL Logging Test', desc: 'Run a MidiQOL item use test to validate AI log enrichment (requires MidiQOL & an attack item)' },
+                { id: 'autoResolve', name: 'Auto Resolve Test', desc: 'Create a small combat and call autoResolveCombat for diagnostics' }
+            ],
+            // AI / Automation settings
+            aiProvider: getSetting('aiProvider', 'system'),
+            aiApiKey: getSetting('aiApiKey', ''),
+            automateDecisions: getSetting('automateDecisions', false),
+            automateCombat: getSetting('automateCombat', false),
+            automateRequireApproval: getSetting('automateRequireApproval', false),
+            aiPendingMaxEntries: getSetting('aiPendingMaxEntries', 100),
+            combatAutomationLevel: getSetting('combatAutomationLevel', 'assisted'),
+            autoResolveAffectsPlayers: getSetting('autoResolveAffectsPlayers', false),
+            autoPerformSuggestions: getSetting('autoPerformSuggestions', false),
+            midiQolLoggingLevel: getSetting('midiQolLoggingLevel', 'minimal'),
             
             // Scene info
             scene: canvas.scene ? { name: canvas.scene.name } : { name: 'No Scene' },
@@ -227,6 +293,46 @@ export class GMHubApp extends Application {
     }
 
     /**
+     * Get default guard actor info from settings
+     */
+    _getDefaultGuardActor() {
+        const customizations = getSetting('jailCustomizations', {})
+        const guardInfo = customizations.defaultGuardActor
+        if (!guardInfo) return null
+        
+        // If it's a world actor, get current info
+        if (guardInfo.actorId && !guardInfo.pack) {
+            const actor = game.actors.get(guardInfo.actorId)
+            if (actor) {
+                return { actorId: actor.id, name: actor.name, img: actor.img }
+            }
+        }
+        
+        // Return compendium info as-is
+        return guardInfo
+    }
+
+    /**
+     * Get default inmate actor info from settings
+     */
+    _getDefaultInmateActor() {
+        const customizations = getSetting('jailCustomizations', {})
+        const inmateInfo = customizations.defaultInmateActor
+        if (!inmateInfo) return null
+        
+        // If it's a world actor, get current info
+        if (inmateInfo.actorId && !inmateInfo.pack) {
+            const actor = game.actors.get(inmateInfo.actorId)
+            if (actor) {
+                return { actorId: actor.id, name: actor.name, img: actor.img }
+            }
+        }
+        
+        // Return compendium info as-is
+        return inmateInfo
+    }
+
+    /**
      * Calculate patrol statistics
      */
     _calculateStats(patrols) {
@@ -276,6 +382,7 @@ export class GMHubApp extends Application {
      */
     _formatPatrolData(patrol) {
         const token = canvas.tokens?.get(patrol.tokenId);
+        const guardActor = patrol.guardActorId ? game.actors.get(patrol.guardActorId) : null
         
         return {
             id: patrol.id,
@@ -300,6 +407,13 @@ export class GMHubApp extends Application {
             isPaused: patrol.state === PATROL_STATES.PAUSED,
             isStopped: patrol.state === PATROL_STATES.IDLE,
             color: patrol.color || '#4a90d9'
+            ,guardActorId: patrol.guardActorId || null
+            ,guardActorName: guardActor?.name || null
+            ,guardActorImg: guardActor?.img || null
+            ,aggressiveness: patrol.aggressiveness || 'normal'
+            ,automateCombat: patrol.automateCombat === true ? 'enabled' : (patrol.automateCombat === false ? 'disabled' : 'inherit')
+            ,automateDecisions: patrol.automateDecisions === true ? 'enabled' : (patrol.automateDecisions === false ? 'disabled' : 'inherit')
+            ,automateRequireApproval: patrol.automateRequireApproval === true ? 'enabled' : (patrol.automateRequireApproval === false ? 'disabled' : 'inherit')
         };
     }
 
@@ -341,6 +455,32 @@ export class GMHubApp extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
+        // Restore active tab after render
+        if (this.activeTab) {
+            html.find('.nav-item').removeClass('active');
+            html.find(`.nav-item[data-tab="${this.activeTab}"]`).addClass('active');
+            html.find('.tab-panel').removeClass('active');
+            html.find(`.tab-panel[data-tab="${this.activeTab}"]`).addClass('active');
+        }
+
+        // Tab navigation (custom handling for new layout)
+        html.find('.nav-item').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const tab = ev.currentTarget.dataset.tab;
+            if (!tab) return;
+            
+            // Update nav active state
+            html.find('.nav-item').removeClass('active');
+            $(ev.currentTarget).addClass('active');
+            
+            // Show corresponding panel
+            html.find('.tab-panel').removeClass('active');
+            html.find(`.tab-panel[data-tab="${tab}"]`).addClass('active');
+            
+            this.activeTab = tab;
+        });
+
         // Global controls
         html.find('[data-action="start-all"]').click(() => this._onStartAll());
         html.find('[data-action="stop-all"]').click(() => this._onStopAll());
@@ -357,6 +497,12 @@ export class GMHubApp extends Application {
         html.find('[data-action="resume-patrol"]').click(ev => this._onPatrolAction(ev, 'resume'));
         html.find('[data-action="edit-patrol"]').click(ev => this._onEditPatrol(ev));
         html.find('[data-action="delete-patrol"]').click(ev => this._onDeletePatrol(ev));
+        html.find('[data-action="assign-guard"]').click(ev => this._onAssignGuard(ev));
+        html.find('[data-action="clear-patrol-guard"]').click(ev => this._onClearPatrolGuard(ev));
+        html.find('[data-action="toggle-patrol-automation"]').click(ev => this._onTogglePatrolAutomation(ev));
+        html.find('[data-action="toggle-patrol-decisions"]').click(ev => this._onTogglePatrolDecisions(ev));
+        html.find('[data-action="toggle-patrol-approval"]').click(ev => this._onTogglePatrolApproval(ev));
+        html.find('[data-action="cycle-patrol-aggressiveness"]').click(ev => this._onCyclePatrolAggressiveness(ev));
         html.find('[data-action="pan-to-patrol"]').click(ev => this._onPanToPatrol(ev));
         html.find('[data-action="select-patrol"]').click(ev => this._onSelectPatrol(ev));
 
@@ -385,12 +531,21 @@ export class GMHubApp extends Application {
             const val = ev.currentTarget.value;
             if (ev.currentTarget.name === 'briberyChance') {
                 span.text(`${val}%`);
+            } else if (ev.currentTarget.name === 'bleedOutThreshold') {
+                span.text(`${val}%`);
             } else if (ev.currentTarget.name === 'barkVolume') {
                 span.text(`${Math.round(val * 100)}%`);
             } else if (ev.currentTarget.name === 'telegraphDuration') {
                 span.text(`${val}ms`);
             }
         });
+        
+        // Set bleedOutPlayerControl select value from data
+        const bleedOutCtrl = this.object?.bleedOutPlayerControl || getSetting('bleedOutPlayerControl', 'player') || 'player';
+        html.find('[name="bleedOutPlayerControl"]').val(bleedOutCtrl);
+
+        // ==================== Detection Settings ====================
+        html.find('[data-action="save-detection-settings"]').click(() => this._saveDetectionSettings(html));
 
         // ==================== Bark System ====================
         html.find('[data-action="save-bark-settings"]').click(() => this._saveBarkSettings(html));
@@ -405,22 +560,587 @@ export class GMHubApp extends Application {
         html.find('[data-action="save-jail-settings"]').click(() => this._saveJailSettings(html));
         html.find('[data-action="create-jail"]').click(ev => this._createJailScene(ev));
         html.find('[data-action="visit-jail"]').click(ev => this._visitJail(ev));
+        html.find('[data-action="reset-jail"]').click(ev => this._resetJail(ev));
         html.find('[data-action="delete-jail"]').click(ev => this._deleteJail(ev));
+        html.find('[data-action="edit-jail"]').click(ev => this._editJailConfig(ev));
+        html.find('[data-action="pick-random-guard"]').click(ev => this._onPickRandomGuard(ev));
+        html.find('[data-action="clear-guard"]').click(ev => this._onClearGuard(ev));
+        html.find('[data-action="toggle-guard-lock"]').click(ev => this._onToggleGuardLock(ev));
+        html.find('[data-action="clear-all-scene-guards"]').click(ev => this._onClearAllSceneGuards(ev));
+        html.find('[data-action="choose-guard"]').click(ev => this._onChooseGuard(ev));
         html.find('[data-action="release-prisoner"]').click(ev => this._releasePrisoner(ev));
         html.find('[data-action="visit-prisoner"]').click(ev => this._visitPrisoner(ev));
         html.find('[data-action="release-all-prisoners"]').click(() => this._releaseAllPrisoners());
+        // Compendium token picker actions
+        html.find('[data-action="pick-default-guard-compendium"]').click(() => this._openCompendiumPicker('guard'));
+        html.find('[data-action="pick-default-guard-world"]').click(() => this._openWorldActorPicker('guard'));
+        html.find('[data-action="pick-default-inmate-compendium"]').click(() => this._openCompendiumPicker('inmate'));
+        html.find('[data-action="pick-default-inmate-world"]').click(() => this._openWorldActorPicker('inmate'));
+        html.find('[data-action="clear-default-guard"]').click(() => this._clearDefaultActor('guard'));
+        html.find('[data-action="clear-default-inmate"]').click(() => this._clearDefaultActor('inmate'));
+
+        // ==================== AI / Automation ====================
+        html.find('[data-action="save-ai-settings"]').click(() => this._saveAiSettings(html));
+        html.find('[name="aiProvider"]').on('change', (ev) => {
+            const val = $(ev.currentTarget).val();
+            if (val === 'openai') {
+                html.find('.ai-api-key').show();
+            } else {
+                html.find('.ai-api-key').hide();
+            }
+        });
 
         // ==================== Utilities ====================
         html.find('[data-action="clear-all-waypoints"]').click(() => this._clearAllWaypoints());
+        html.find('[data-action="clear-ai-log"]').click(() => this._clearAiLog());
+        html.find('[data-action="export-ai-log"]').click(() => this._exportAiLog());
+        html.find('[data-action="undo-ai-log"]').click(ev => this._onUndoAiLogEntry(ev));
+        html.find('[data-action="approve-ai-pending"]').click(ev => this._onApproveAiPending(ev));
+        html.find('[data-action="reject-ai-pending"]').click(ev => this._onRejectAiPending(ev));
+        html.find('[data-action="replay-ai-log"]').click(ev => this._onReplayAiLogEntry(ev));
+        // Diagnostics & Tests
+        html.find('[data-action="show-adapter-info"]').click(ev => this._onShowAdapterInfo(ev));
+        html.find('[data-action="run-adapter-test"]').click(ev => this._onRunAdapterTest(ev));
+        html.find('[data-action="copy-adapter-summary"]').click(ev => this._onCopyAdapterSummary(ev));
+        html.find('[data-action="run-test"]').click(ev => this._onRunTest(ev));
+        html.find('[data-action="run-all-tests"]').click(ev => this._onRunAllTests(ev));
 
         // Keyboard shortcuts
         html.on('keydown', ev => this._onKeydown(ev));
+
+        // Suspend auto-refresh while the user is interacting with form fields
+        html.find('input, textarea, select').on('focus', () => {
+            this._suspendAutoRefresh = true;
+        });
+        html.find('input, textarea, select').on('blur', () => {
+            // Delay clearing the suspend flag to avoid re-render while user is still working
+            // Use a longer delay (1 second) to account for token spawns that might steal focus
+            setTimeout(() => { 
+                // Double-check that user isn't still editing
+                const stillEditing = document.activeElement && 
+                    this.element[0]?.contains(document.activeElement) &&
+                    ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+                if (!stillEditing) {
+                    this._suspendAutoRefresh = false; 
+                }
+            }, 1000);
+        });
+
+        // Also suspend auto-refresh while the user is scrolling or hovering the hub
+        const hubElement = html.find('.hub');
+        if (hubElement && hubElement.length) {
+            // On scroll: suspend and debounce a short period after scrolling stops
+            hubElement.on('scroll', '*', () => {
+                this._suspendAutoRefresh = true;
+                if (this._scrollTimer) clearTimeout(this._scrollTimer);
+                this._scrollTimer = setTimeout(() => {
+                    this._suspendAutoRefresh = false;
+                    this._scrollTimer = null;
+                }, 2000); // Keep suspended for 2s after scroll ends
+            });
+
+            // On mouse enter, suspend; on leave, clear after short delay
+            hubElement.on('mouseenter', () => {
+                this._suspendAutoRefresh = true;
+            });
+            hubElement.on('mouseleave', () => {
+                setTimeout(() => {
+                    // Only clear if not actively focused in an input
+                    if (!this.element.find('input:focus, textarea:focus, select:focus').length) {
+                        this._suspendAutoRefresh = false;
+                    }
+                }, 2000); // Wait 2 seconds after mouse leaves
+            });
+        }
 
         // Register for patrol updates
         Hooks.on(`${MODULE_ID}.patrolUpdate`, this._onPatrolUpdate);
 
         // Start auto-refresh
         this._startAutoRefresh();
+    }
+
+    async _onTogglePatrolAutomation(event) {
+        event.preventDefault()
+        const card = $(event.currentTarget).closest('.patrol-card')
+        const patrolId = card.data('patrol-id')
+        if (!patrolId) return
+
+        const manager = game.rnkPatrol?.manager
+        const patrol = manager?.getPatrol(patrolId)
+        if (!patrol) return
+
+        // Toggle patch: if null -> enable (true), if true -> disable (false), if false -> set to null (inherit)
+        let nextVal = null
+        if (patrol.automateCombat === null) nextVal = true
+        else if (patrol.automateCombat === true) nextVal = false
+        else nextVal = null
+
+        patrol.automateCombat = nextVal
+        await patrol.save()
+        this.render(false)
+    }
+
+    async _onTogglePatrolDecisions(event) {
+        event.preventDefault()
+        const card = $(event.currentTarget).closest('.patrol-card')
+        const patrolId = card.data('patrol-id')
+        if (!patrolId) return
+
+        const manager = game.rnkPatrol?.manager
+        const patrol = manager?.getPatrol(patrolId)
+        if (!patrol) return
+
+        // Toggle: null -> enabled(true) -> disabled(false) -> null
+        let nextVal = null
+        if (patrol.automateDecisions === null) nextVal = true
+        else if (patrol.automateDecisions === true) nextVal = false
+        else nextVal = null
+
+        patrol.automateDecisions = nextVal
+        await patrol.save()
+        this.render(false)
+    }
+
+    async _onTogglePatrolApproval(event) {
+        const btn = $(event.currentTarget)
+        const card = btn.closest('.patrol-card')
+        const id = card.data('patrol-id')
+        const patrol = game.rnkPatrol?.manager?.getPatrol(id)
+        if (!patrol) return
+        // Provide explicit choice via Dialog: Inherit / Require Approval / Do Not Require
+        const content = `
+            <p>Choose approval behavior for <strong>${patrol.name}</strong>:</p>
+            <div class="form-group">
+                <label><input type="radio" name="choice" value="inherit" ${patrol.automateRequireApproval === null ? 'checked' : ''}/> Inherit</label>
+            </div>
+            <div class="form-group">
+                <label><input type="radio" name="choice" value="enabled" ${patrol.automateRequireApproval === true ? 'checked' : ''}/> Require Approval</label>
+            </div>
+            <div class="form-group">
+                <label><input type="radio" name="choice" value="disabled" ${patrol.automateRequireApproval === false ? 'checked' : ''}/> Do Not Require</label>
+            </div>
+        `
+        const dlg = new Dialog({
+            title: 'Set AI Approval for Patrol',
+            content,
+            buttons: {
+                save: { icon: '<i class="fas fa-save"></i>', label: 'Save', callback: async (html) => {
+                    const choice = html.find('input[name="choice"]:checked').val()
+                    const newVal = choice === 'inherit' ? null : (choice === 'enabled')
+                    patrol.automateRequireApproval = newVal
+                    await patrol.save()
+                    this.render(false)
+                }},
+                cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancel' }
+            }
+        })
+        dlg.render(true)
+    }
+
+    async _onCyclePatrolAggressiveness(event) {
+        event.preventDefault()
+        const card = $(event.currentTarget).closest('.patrol-card')
+        const patrolId = card.data('patrol-id')
+        if (!patrolId) return
+
+        const manager = game.rnkPatrol?.manager
+        const patrol = manager?.getPatrol(patrolId)
+        if (!patrol) return
+
+        const order = ['conservative', 'normal', 'aggressive']
+        const next = (cur) => {
+            const i = order.indexOf(cur)
+            return order[(i+1) % order.length]
+        }
+
+        patrol.aggressiveness = next(patrol.aggressiveness || 'normal')
+        await patrol.save()
+        this.render(false)
+    }
+
+    /**
+     * Pick a random NPC actor to use as the guard for a scene
+     */
+    _onPickRandomGuard(ev) {
+        const sceneId = ev.currentTarget.dataset.sceneId
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+        const actor = jailSystem.getRandomNpcActor(sceneId)
+        if (!actor) {
+            ui.notifications.warn('No NPC actors available to assign as guards')
+            return
+        }
+        jailSystem.setSceneGuardActor(sceneId, actor.id)
+        ui.notifications.info(`Assigned ${actor.name} as guard for scene`) 
+        this.render()
+    }
+
+    /**
+     * Clear the chosen guard actor for a scene
+     */
+    _onClearGuard(ev) {
+        const sceneId = ev.currentTarget.dataset.sceneId
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+        jailSystem.clearSceneGuardActor(sceneId)
+        ui.notifications.info('Cleared guard selection for scene')
+        this.render()
+    }
+
+    _onToggleGuardLock(ev) {
+        const sceneId = ev.currentTarget.dataset.sceneId
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+        const checked = ev.currentTarget.checked
+        // Persist per-scene flag on the scene itself so it persists
+        const scene = game.scenes.get(sceneId)
+        if (!scene) return
+        scene.setFlag(MODULE_ID, 'guardActorLocked', checked)
+        ui.notifications.info(checked ? 'Guard actor locked for scene' : 'Guard actor unlocked for scene')
+        this.render()
+    }
+
+    _onClearAllSceneGuards(ev) {
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+        const jailScenes = this._getJailScenes() || []
+        const previousCache = new Map(jailSystem._sceneGuardActor)
+        for (const s of jailScenes) {
+            jailSystem.clearSceneGuardActor(s.sceneId)
+        }
+        ui.notifications.info('Cleared cached guard actor for all jail scenes. Undo?', {buttons: [{label: 'Undo'}]})
+        // Provide a small undo mechanism with a notification button via Dialog
+        const dialog = new Dialog({
+            title: 'Guard Cache Cleared',
+            content: '<p>Guard actor cache cleared for all jail scenes. Click Undo to restore.</p>',
+            buttons: {
+                undo: {
+                    label: 'Undo',
+                    callback: () => {
+                        for (const [sceneId, actorId] of previousCache) {
+                            jailSystem.setSceneGuardActor(sceneId, actorId)
+                        }
+                        ui.notifications.info('Restored guard actor cache for all jail scenes')
+                        this.render()
+                    }
+                },
+                ok: { label: 'OK' }
+            },
+            default: 'ok'
+        })
+        dialog.render(true)
+        this.render()
+    }
+
+    async _onChooseGuard(ev) {
+        const sceneId = ev.currentTarget.dataset.sceneId
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+        // Prepare list of NPC actors
+        const actors = game.actors.contents.filter(a => !a.hasPlayerOwner)
+        const options = actors.reduce((acc, a) => acc + `<option value="${a.id}">${a.name}</option>`, '')
+        const content = `
+            <div style="padding:12px;">
+                <label>Select Guard Actor</label>
+                <select id="select-guard-actor" style="width:100%; padding:6px; margin-top:8px;">${options}</select>
+            </div>
+        `
+        const dialog = new Dialog({
+            title: 'Choose Guard Actor',
+            content,
+            buttons: {
+                ok: {
+                    label: 'Assign',
+                    callback: (html) => {
+                        const actorId = html.find('#select-guard-actor').val()
+                        if (actorId) {
+                            jailSystem.setSceneGuardActor(sceneId, actorId)
+                            const actor = game.actors.get(actorId)
+                            ui.notifications.info(`Assigned ${actor?.name} as guard for scene`)
+                            this.render()
+                        }
+                    }
+                },
+                cancel: {
+                    label: 'Cancel'
+                }
+            },
+            default: 'ok'
+        })
+        dialog.render(true)
+    }
+
+    async _onAssignGuard(ev) {
+        const patrolId = ev.currentTarget.closest('.patrol-card')?.dataset?.patrolId
+        if (!patrolId) return
+        const manager = game.rnkPatrol?.manager
+        const patrol = manager?.getPatrols?.().find(p => p.id === patrolId)
+        if (!patrol) return
+
+        const actors = game.actors.contents.filter(a => !a.hasPlayerOwner)
+        if (!actors.length) {
+            ui.notifications.warn('No NPC actors available')
+            return
+        }
+        const options = actors.reduce((acc, a) => acc + `<option value="${a.id}" ${a.id === patrol.guardActorId ? 'selected' : ''}>${a.name}</option>`, '')
+        const content = `<div style="padding:12px;"><label>Select Guard Actor for ${patrol.name}</label><select id="select-patrol-guard" style="width:100%; padding:6px; margin-top:8px;"><option value="">-- Clear --</option>${options}</select></div>`
+        const dialog = new Dialog({
+            title: `Assign Guard Actor for ${patrol.name}`,
+            content,
+            buttons: {
+                ok: {
+                    label: 'Assign',
+                    callback: async (html) => {
+                        const actorId = html.find('#select-patrol-guard').val() || null
+                        patrol.guardActorId = actorId || null
+                        await patrol.save()
+                        ui.notifications.info(`Assigned ${actorId ? game.actors.get(actorId)?.name : 'No Actor'} to patrol ${patrol.name}`)
+                        this.render()
+                    }
+                },
+                cancel: { label: 'Cancel' }
+            },
+            default: 'ok'
+        })
+        dialog.render(true)
+    }
+
+    async _onClearPatrolGuard(ev) {
+        const patrolId = ev.currentTarget.closest('.patrol-card')?.dataset?.patrolId
+        if (!patrolId) return
+        const manager = game.rnkPatrol?.manager
+        const patrol = manager?.getPatrols?.().find(p => p.id === patrolId)
+        if (!patrol) return
+        patrol.guardActorId = null
+        await patrol.save()
+        ui.notifications.info(`Cleared guard actor for patrol ${patrol.name}`)
+        this.render()
+    }
+
+    /**
+     * Open the compendium actor picker for guard or inmate selection
+     * @param {string} mode - 'guard' or 'inmate'
+     */
+    async _openCompendiumPicker(mode) {
+        // Dynamically import to avoid circular dependencies
+        const { CompendiumActorPicker } = await import('./CompendiumActorPicker.js')
+        
+        const picker = new CompendiumActorPicker({
+            mode,
+            callback: async (result) => {
+                await this._handleActorSelection(result)
+            }
+        })
+        picker.render(true)
+    }
+
+    /**
+     * Open a simple dialog to pick from world actors
+     * @param {string} mode - 'guard' or 'inmate'
+     */
+    async _openWorldActorPicker(mode) {
+        const actors = game.actors.filter(a => !a.hasPlayerOwner)
+        if (!actors.length) {
+            ui.notifications.warn('No NPC actors available in the world')
+            return
+        }
+
+        const options = actors.map(a => 
+            `<option value="${a.id}">${a.name}</option>`
+        ).join('')
+
+        const modeLabel = mode === 'guard' ? 'Guard' : 'Inmate'
+        const content = `
+            <div class="rnk-patrol" style="padding: 12px;">
+                <p>Select a world actor to use as the default ${modeLabel.toLowerCase()} in jail scenes:</p>
+                <div class="form-group">
+                    <select id="world-actor-select" style="width: 100%; padding: 8px; margin-top: 8px;">
+                        ${options}
+                    </select>
+                </div>
+            </div>
+        `
+
+        const dialog = new Dialog({
+            title: `Select ${modeLabel} Actor`,
+            content,
+            buttons: {
+                ok: {
+                    icon: '<i class="fas fa-check"></i>',
+                    label: 'Select',
+                    callback: async (html) => {
+                        const actorId = html.find('#world-actor-select').val()
+                        const actor = game.actors.get(actorId)
+                        if (actor) {
+                            await this._handleActorSelection({
+                                mode,
+                                actor: {
+                                    actorId: actor.id,
+                                    name: actor.name,
+                                    img: actor.img,
+                                    pack: null,
+                                    uuid: actor.uuid
+                                }
+                            })
+                        }
+                    }
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: 'Cancel'
+                }
+            },
+            default: 'ok'
+        }, { width: 400, classes: ['rnk-patrol'] })
+        
+        dialog.render(true)
+    }
+
+    /**
+     * Handle the result of actor selection from picker dialogs
+     * @param {Object} result - { mode, actor: { actorId, name, img, pack, uuid } }
+     */
+    async _handleActorSelection(result) {
+        const { mode, actor } = result
+        const customizations = getSetting('jailCustomizations') || {}
+
+        if (mode === 'guard') {
+            customizations.defaultGuardActor = actor
+            ui.notifications.info(`Set default guard actor: ${actor?.name || 'None'}`)
+        } else if (mode === 'inmate') {
+            customizations.defaultInmateActor = actor
+            ui.notifications.info(`Set default inmate actor: ${actor?.name || 'None'}`)
+        }
+
+        await setSetting('jailCustomizations', customizations)
+        this.render()
+    }
+
+    /**
+     * Clear the default guard or inmate actor
+     * @param {string} mode - 'guard' or 'inmate'
+     */
+    async _clearDefaultActor(mode) {
+        const customizations = getSetting('jailCustomizations') || {}
+
+        if (mode === 'guard') {
+            delete customizations.defaultGuardActor
+            ui.notifications.info('Cleared default guard actor')
+        } else if (mode === 'inmate') {
+            delete customizations.defaultInmateActor
+            ui.notifications.info('Cleared default inmate actor')
+        }
+
+        await setSetting('jailCustomizations', customizations)
+        this.render()
+    }
+
+    /**
+     * Open the jail configuration editor dialog
+     */
+    async _editJailConfig(ev) {
+        const sceneId = ev.currentTarget.dataset.sceneId
+        const configKey = ev.currentTarget.dataset.configKey
+        const jailSystem = game.rnkPatrol?.jailSystem
+        if (!jailSystem) return
+
+        const scene = game.scenes.get(sceneId)
+        if (!scene) {
+            ui.notifications.error('Jail scene not found')
+            return
+        }
+
+        const config = jailSystem.getMergedJailConfig(configKey) || {}
+        const customizations = jailSystem.getJailCustomizations(configKey) || {}
+
+        const content = `
+            <div class="rnk-patrol jail-config-editor" style="padding: 12px;">
+                <h3><i class="fas fa-dungeon"></i> ${scene.name}</h3>
+                
+                <div class="form-group">
+                    <label>Captured Spawn Point</label>
+                    <div class="coordinate-inputs">
+                        <input type="number" name="capturedX" value="${config.capturedSpawnPoint?.x || 100}" placeholder="X">
+                        <input type="number" name="capturedY" value="${config.capturedSpawnPoint?.y || 100}" placeholder="Y">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Group Spawn Point (Rescue Party)</label>
+                    <div class="coordinate-inputs">
+                        <input type="number" name="groupX" value="${config.groupSpawnPoint?.x || 500}" placeholder="X">
+                        <input type="number" name="groupY" value="${config.groupSpawnPoint?.y || 500}" placeholder="Y">
+                    </div>
+                </div>
+
+                <h4>Guard Spawn Points</h4>
+                <div class="spawn-list guards-list">
+                    ${(config.guardSpawns || []).map((g, i) => `
+                        <div class="spawn-item">
+                            <span class="spawn-name">${g.name || `Guard ${i+1}`}</span>
+                            <input type="number" name="guardX${i}" value="${g.x}" placeholder="X">
+                            <input type="number" name="guardY${i}" value="${g.y}" placeholder="Y">
+                        </div>
+                    `).join('')}
+                </div>
+
+                <h4>Inmate Spawn Points</h4>
+                <div class="spawn-list inmates-list">
+                    ${(config.inmateSpawns || []).map((im, i) => `
+                        <div class="spawn-item">
+                            <span class="spawn-name">${im.name || `Inmate ${i+1}`}</span>
+                            <input type="number" name="inmateX${i}" value="${im.x}" placeholder="X">
+                            <input type="number" name="inmateY${i}" value="${im.y}" placeholder="Y">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `
+
+        const dialog = new Dialog({
+            title: `Edit Jail Configuration`,
+            content,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: 'Save',
+                    callback: async (html) => {
+                        const newCustomizations = {
+                            capturedSpawnPoint: {
+                                x: parseInt(html.find('[name="capturedX"]').val()) || 100,
+                                y: parseInt(html.find('[name="capturedY"]').val()) || 100
+                            },
+                            groupSpawnPoint: {
+                                x: parseInt(html.find('[name="groupX"]').val()) || 500,
+                                y: parseInt(html.find('[name="groupY"]').val()) || 500
+                            },
+                            guardSpawns: (config.guardSpawns || []).map((g, i) => ({
+                                ...g,
+                                x: parseInt(html.find(`[name="guardX${i}"]`).val()) || g.x,
+                                y: parseInt(html.find(`[name="guardY${i}"]`).val()) || g.y
+                            })),
+                            inmateSpawns: (config.inmateSpawns || []).map((im, i) => ({
+                                ...im,
+                                x: parseInt(html.find(`[name="inmateX${i}"]`).val()) || im.x,
+                                y: parseInt(html.find(`[name="inmateY${i}"]`).val()) || im.y
+                            }))
+                        }
+
+                        await jailSystem.saveJailCustomizations(configKey, newCustomizations)
+                        ui.notifications.info(`Saved jail configuration for ${scene.name}`)
+                        this.render()
+                    }
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: 'Cancel'
+                }
+            },
+            default: 'save'
+        }, { width: 500, classes: ['rnk-patrol'] })
+
+        dialog.render(true)
     }
     
     /**
@@ -445,6 +1165,12 @@ export class GMHubApp extends Application {
         const briberyBaseCost = parseInt(html.find('[name="briberyBaseCost"]').val()) || 50;
         const briberyChance = parseInt(html.find('[name="briberyChance"]').val()) || 70;
         
+        // Bleed-out settings
+        const bleedOutEnabled = html.find('[name="bleedOutEnabled"]').prop('checked');
+        const bleedOutThreshold = parseInt(html.find('[name="bleedOutThreshold"]').val()) || 25;
+        const bleedOutBaseDC = parseInt(html.find('[name="bleedOutBaseDC"]').val()) || 12;
+        const bleedOutPlayerControl = html.find('[name="bleedOutPlayerControl"]').val() || 'player';
+        
         const outcomeWeights = {
             combat: parseInt(html.find('[name="weight-combat"]').val()) || 0,
             theft: parseInt(html.find('[name="weight-theft"]').val()) || 0,
@@ -467,12 +1193,43 @@ export class GMHubApp extends Application {
         await setSetting('briberyBaseCost', briberyBaseCost);
         await setSetting('briberyChance', briberyChance);
         
+        // Save bleed-out settings
+        await setSetting('bleedOutEnabled', bleedOutEnabled);
+        await setSetting('bleedOutThreshold', bleedOutThreshold);
+        await setSetting('bleedOutBaseDC', bleedOutBaseDC);
+        await setSetting('bleedOutPlayerControl', bleedOutPlayerControl);
+        
         // Update capture system if it exists
         if (game.rnkPatrol?.captureSystem) {
             game.rnkPatrol.captureSystem.updateSettings();
         }
         
         ui.notifications.info('Capture settings saved!');
+    }
+    
+    /**
+     * Save detection settings
+     */
+    async _saveDetectionSettings(html) {
+        const enableDetection = html.find('[name="enableDetection"]').prop('checked');
+        const defaultDetectionRange = parseInt(html.find('[name="defaultDetectionRange"]').val()) || 5;
+        const detectionTrigger = html.find('[name="detectionTrigger"]').val() || 'notify';
+        const sightCheckMethod = html.find('[name="sightCheckMethod"]').val() || 'ray';
+        const detectHiddenPlayers = html.find('[name="detectHiddenPlayers"]').prop('checked');
+        const detectInvisible = html.find('[name="detectInvisible"]').prop('checked');
+        const maxActivePatrols = parseInt(html.find('[name="maxActivePatrols"]').val()) || 20;
+        const updateInterval = parseInt(html.find('[name="updateInterval"]').val()) || 500;
+        
+        await setSetting('enableDetection', enableDetection);
+        await setSetting('defaultDetectionRange', defaultDetectionRange);
+        await setSetting('detectionTrigger', detectionTrigger);
+        await setSetting('sightCheckMethod', sightCheckMethod);
+        await setSetting('detectHiddenPlayers', detectHiddenPlayers);
+        await setSetting('detectInvisible', detectInvisible);
+        await setSetting('maxActivePatrols', maxActivePatrols);
+        await setSetting('updateInterval', updateInterval);
+        
+        ui.notifications.info('Detection settings saved!');
     }
     
     /**
@@ -523,13 +1280,36 @@ export class GMHubApp extends Application {
         const category = event.currentTarget.dataset.category;
         const input = this.element.find(`[name="bark-path-${category}"]`);
         
-        new FilePicker({
-            type: 'folder',
-            current: input.val() || `modules/${MODULE_ID}/assets/audio/barks/${category}/`,
-            callback: (path) => {
-                input.val(path);
-            }
-        }).render(true);
+        // Use V13+ namespaced FilePicker if available, fallback to global for V12
+        const FilePickerClass = foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker;
+        
+        // Default to root barks folder - subfolders don't exist
+        const defaultPath = `modules/${MODULE_ID}/assets/audio/barks/`;
+        let currentPath = input.val();
+        
+        // If the current path doesn't exist or is empty, use default
+        if (!currentPath || currentPath.includes(`/barks/${category}/`)) {
+            currentPath = defaultPath;
+        }
+        
+        try {
+            new FilePickerClass({
+                type: 'folder',
+                current: currentPath,
+                callback: (path) => {
+                    input.val(path);
+                }
+            }).render(true);
+        } catch (err) {
+            console.warn('RNK Patrol | FilePicker error, using default path:', err);
+            new FilePickerClass({
+                type: 'folder',
+                current: defaultPath,
+                callback: (path) => {
+                    input.val(path);
+                }
+            }).render(true);
+        }
     }
     
     /**
@@ -557,7 +1337,7 @@ export class GMHubApp extends Application {
     }
     
     /**
-     * Preview telegraph effect at mouse position
+     * Preview telegraph effect at center of viewport
      */
     async _previewTelegraph() {
         if (!canvas.scene) {
@@ -566,12 +1346,16 @@ export class GMHubApp extends Application {
         }
         
         // Get center of viewport
-        const center = canvas.scene.dimensions;
-        const x = center.sceneX + (center.sceneWidth / 2);
-        const y = center.sceneY + (center.sceneHeight / 2);
+        const viewportCenter = canvas.scene.dimensions;
+        const position = {
+            x: viewportCenter.sceneX + (viewportCenter.sceneWidth / 2),
+            y: viewportCenter.sceneY + (viewportCenter.sceneHeight / 2)
+        };
         
         if (game.rnkPatrol?.telegraphSystem) {
-            await game.rnkPatrol.telegraphSystem.showTelegraph(x, y);
+            // Pass position as an object with x/y properties
+            await game.rnkPatrol.telegraphSystem.showTelegraph(position);
+            ui.notifications.info('Telegraph preview shown at scene center');
         } else {
             ui.notifications.warn('Telegraph system not initialized');
         }
@@ -593,6 +1377,39 @@ export class GMHubApp extends Application {
         
         ui.notifications.info('Jail settings saved!');
     }
+
+    /**
+     * Save AI & Automation settings
+     */
+    async _saveAiSettings(html) {
+        const aiProvider = html.find('[name="aiProvider"]').val();
+        const aiApiKey = html.find('[name="aiApiKey"]').val()?.trim() || '';
+        const automateDecisions = html.find('[name="automateDecisions"]').prop('checked');
+        const automateCombat = html.find('[name="automateCombat"]').prop('checked');
+        const autoResolveAffectsPlayers = html.find('[name="autoResolveAffectsPlayers"]').prop('checked');
+        const autoPerformSuggestions = html.find('[name="autoPerformSuggestions"]').prop('checked');
+        const automateRequireApproval = html.find('[name="automateRequireApproval"]').prop('checked');
+        const aiPendingMaxEntries = parseInt(html.find('[name="aiPendingMaxEntries"]').val()) || 100
+        const midiQolLoggingLevel = html.find('[name="midiQolLoggingLevel"]').val() || 'minimal'
+        const combatAutomationLevel = html.find('[name="combatAutomationLevel"]').val();
+
+        await setSetting('aiProvider', aiProvider);
+        await setSetting('automateDecisions', automateDecisions);
+        await setSetting('automateCombat', automateCombat);
+        await setSetting('combatAutomationLevel', combatAutomationLevel);
+        await setSetting('autoResolveAffectsPlayers', autoResolveAffectsPlayers);
+        await setSetting('autoPerformSuggestions', autoPerformSuggestions);
+        await setSetting('automateRequireApproval', automateRequireApproval);
+        await setSetting('aiPendingMaxEntries', aiPendingMaxEntries);
+        // aiApiKey is client-scope
+        await game.settings.set(MODULE_ID, 'aiApiKey', aiApiKey);
+        await setSetting('midiQolLoggingLevel', midiQolLoggingLevel);
+
+        if (aiProvider === 'openai' && !aiApiKey) {
+            ui.notifications.warn('OpenAI selected as AI provider, but no API key provided. Falling back to system heuristics.');
+        }
+        ui.notifications.info('AI & automation settings saved!');
+    }
     
     /**
      * Create a jail scene from template (on-demand creation)
@@ -610,6 +1427,305 @@ export class GMHubApp extends Application {
             ui.notifications.warn('Jail system not initialized');
         }
     }
+
+    async _clearAiLog() {
+        const confirmed = await Dialog.confirm({ title: 'Clear AI Log', content: 'Are you sure you want to clear the AI log?' })
+        if (!confirmed) return
+        await game.settings.set(MODULE_ID, 'aiLog', [])
+        ui.notifications.info('AI log cleared')
+        // re-render to clear UI
+        this.render(false)
+    }
+
+    async _exportAiLog() {
+        const entries = game.rnkPatrol?.getAiLog?.() || []
+        const json = JSON.stringify(entries, null, 2)
+        await navigator.clipboard.writeText(json)
+        ui.notifications.info('AI log copied to clipboard (JSON)')
+    }
+
+    async _onUndoAiLogEntry(event) {
+        const btn = $(event.currentTarget)
+        const index = parseInt(btn.closest('.ai-log-item').data('log-index'))
+        const log = game.rnkPatrol?.getAiLog?.() || []
+        if (!log || !log[index]) return
+        const entry = log[index]
+        // Perform undo based on payload
+        if (!entry.undo) {
+            ui.notifications.warn('No undo available for this log entry')
+            return
+        }
+        const undo = entry.undo
+        try {
+            // Use global undo helper
+            const result = await game.rnkPatrol?.undoAiLogEntry?.(entry)
+            if (result?.success) {
+                ui.notifications.info('AI undo completed successfully')
+                // Remove entry from log after undo success
+                const newLog = log.filter((_, i) => i !== index)
+                await game.settings.set(MODULE_ID, 'aiLog', newLog)
+                this.render(false)
+            } else {
+                ui.notifications.warn('AI undo partially failed - check console and log')
+                console.warn('AI undo errors:', result?.errors)
+            }
+        } catch (err) {
+            console.error(`${MODULE_ID} | Undo AI Log entry failed`, err)
+            ui.notifications.error('Failed to undo AI action')
+        }
+    }
+
+    async _onReplayAiLogEntry(event) {
+        const btn = $(event.currentTarget)
+        const index = parseInt(btn.closest('.ai-log-item').data('log-index'))
+        const log = game.rnkPatrol?.getAiLog?.() || []
+        if (!log || !log[index]) return
+        const entry = log[index]
+        try {
+            if (entry.type === 'performAction' && entry.payload) {
+                // Attempt to find attacker/target tokens
+                const attackerId = entry.payload.attackerId
+                const targetId = entry.payload.targetId
+                const attacker = canvas.tokens.placeables.find(t => t.actor?.id === attackerId)
+                const target = canvas.tokens.placeables.find(t => t.actor?.id === targetId)
+                if (!attacker || !target) {
+                    ui.notifications.warn('Unable to find tokens to replay action')
+                    return
+                }
+                // Re-run performAction with same intent
+                await game.rnkPatrol.aiService.performAction({ combatant: { token: attacker.document }, action: 'attack', targetToken: target, combat: null })
+                ui.notifications.info('Replayed AI performAction')
+            } else {
+                ui.notifications.warn('Replay not supported for this log type')
+            }
+        } catch (err) {
+            console.error(`${MODULE_ID} | Replay AI Log entry failed`, err)
+            ui.notifications.error('Failed to replay AI action')
+        }
+    }
+
+    async _onApproveAiPending(event) {
+        const btn = $(event.currentTarget)
+        const index = parseInt(btn.data('index'))
+        const entry = await game.rnkPatrol?.popPendingAction(index)
+        if (!entry) {
+            ui.notifications.warn('No pending entry found')
+            return
+        }
+        try {
+            // Attempt to perform the action
+            if (entry.type === 'performAction' && entry.payload) {
+                const attacker = canvas.tokens.placeables.find(t => t.actor?.id === entry.payload.attackerId)
+                const target = canvas.tokens.placeables.find(t => t.actor?.id === entry.payload.targetId)
+                const success = await game.rnkPatrol.aiService.performAction({ combatant: { token: attacker.document }, action: 'attack', targetToken: target, combat: null })
+                if (success) ui.notifications.info('Approved and performed action')
+                else ui.notifications.warn('Approval performed but action failed')
+            } else if (entry.type === 'bribery' && entry.payload) {
+                const playerToken = canvas.tokens.get(entry.payload.playerId)
+                const patrol = game.rnkPatrol?.manager?.getPatrol(entry.payload.patrolId)
+                if (playerToken && patrol) {
+                    if (entry.payload.accepted) {
+                        await game.rnkPatrol?.captureSystem._executeBriberyResult({ id: 'pending' }, patrol, playerToken, 'bribe_success', entry.payload.bribeAmount)
+                        ui.notifications.info('Approved and performed bribe acceptance')
+                    } else {
+                        await game.rnkPatrol?.captureSystem._executeRandomOutcome({ id: 'pending' }, patrol, playerToken)
+                        ui.notifications.info('Approved AI suggestion (rejected bribe) - proceeded with computed outcome')
+                    }
+                } else {
+                    ui.notifications.warn('Unable to find player or patrol for bribery approval')
+                }
+            } else if (entry.type === 'captureOutcome' && entry.payload) {
+                const playerToken = canvas.tokens.get(entry.payload.playerId)
+                const patrol = game.rnkPatrol?.manager?.getPatrol(entry.payload.patrolId)
+                if (playerToken && patrol) {
+                    await game.rnkPatrol?.captureSystem._executeOutcome({ id: 'pending' }, patrol, playerToken, entry.payload.outcome)
+                    ui.notifications.info('Approved and executed capture outcome')
+                } else {
+                    ui.notifications.warn('Unable to find player or patrol for capture outcome approval')
+                }
+            } else if (entry.type === 'autoResolveCombat' && entry.payload) {
+                const combat = game.combats.get(entry.payload.combatId)
+                if (combat) {
+                    await game.rnkPatrol.aiService.autoResolveCombat(combat)
+                    ui.notifications.info('Approved and performed auto-resolve')
+                } else {
+                    ui.notifications.warn('Unable to find combat for auto-resolve approval')
+                }
+            } else {
+                ui.notifications.warn('Approval type not supported')
+            }
+        } catch (err) {
+            console.error(`${MODULE_ID} | Approve AI pending failed`, err)
+            ui.notifications.error('Failed to approve AI pending action')
+        }
+        this.render(false)
+    }
+
+    async _onRejectAiPending(event) {
+        const btn = $(event.currentTarget)
+        const index = parseInt(btn.data('index'))
+        const entry = await game.rnkPatrol?.popPendingAction(index)
+        if (!entry) {
+            ui.notifications.warn('No pending entry found')
+            return
+        }
+        // Log rejection
+        game.rnkPatrol.logAiDecision({ type: 'pendingRejected', message: `GM rejected pending action: ${entry.type}`, payload: entry.payload, provider: 'local' })
+        ui.notifications.info('Rejected AI pending action')
+        this.render(false)
+    }
+
+    /**
+     * Show adapter info dialog
+     */
+    async _onShowAdapterInfo(event) {
+        const systemId = event.currentTarget.dataset.system
+        const adapters = game.rnkPatrol?.systemAdapters?.adapters || {}
+        const adapter = adapters[systemId]
+        if (!adapter) return ui.notifications.warn('Adapter not found')
+        const capabilities = Object.keys(adapter).filter(k => typeof adapter[k] === 'function')
+        const content = `<div><strong>${adapter.constructor?.name || 'Adapter'}</strong><p>System: ${systemId}</p><p>Capabilities: ${capabilities.join(', ')}</p></div>`
+        new Dialog({ title: 'Adapter Info', content, buttons: { ok: { label: 'Close' } } }).render(true)
+    }
+
+    async _onRunAdapterTest(event) {
+        if (!game.user.isGM) return ui.notifications.warn('Only the GM can run adapter tests')
+        const systemId = event.currentTarget.dataset.system
+        const adapters = game.rnkPatrol?.systemAdapters?.adapters || {}
+        const adapter = adapters[systemId]
+        if (!adapter) {
+            ui.notifications.warn('Adapter not found')
+            return
+        }
+        // Use selected token if present, else fallback to first token
+        const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+        if (!token) return ui.notifications.warn('Select a token in the scene to run adapter tests')
+        try {
+            const hp = adapter.getActorHp?.(token)
+            const maxHp = adapter.getActorMaxHp?.(token)
+            const ac = adapter.getActorAc?.(token.actor)
+            const items = adapter.getAttackItems?.(token.actor) || []
+            const est = await (adapter.estimateBestAttackForToken?.(token) || null)
+            const msg = `Adapter ${systemId}: HP=${hp}/${maxHp} AC=${ac} Items=${items.length} Estimate=${JSON.stringify(est)}`
+            this._appendTestOutput(msg, 'info')
+            ui.notifications.info('Adapter test complete. See test output in the Tests tab.')
+        } catch (err) {
+            console.error('Adapter test failed', err)
+            this._appendTestOutput(`Adapter ${systemId} test failed: ${err?.message || err}`, 'error')
+        }
+    }
+
+    async _onCopyAdapterSummary(event) {
+        const adapters = game.rnkPatrol?.systemAdapters?.adapters || {}
+        const lines = Object.entries(adapters).map(([k, a]) => `${k}: ${a.constructor?.name || 'Adapter'}; capabilities=${Object.keys(a).filter(x => typeof a[x] === 'function').join(', ')}`)
+        const payload = lines.join('\n')
+        try {
+            await navigator.clipboard.writeText(payload)
+            ui.notifications.info('Adapter summary copied to clipboard')
+        } catch (err) {
+            console.error('Copy failed', err)
+            ui.notifications.warn('Failed to copy adapter summary to clipboard')
+        }
+    }
+
+    /**
+     * Append a message to test output console in the UI
+     */
+    _appendTestOutput(text, level = 'info') {
+        const preEl = this.element?.find?.('.log-output')?.[0] || (this.element?.querySelector ? this.element.querySelector('.log-output') : null)
+        const pre = preEl
+        if (!pre) return
+        const now = new Date().toLocaleTimeString()
+        pre.textContent = `${pre.textContent}\n[${now}] ${text}`
+        pre.scrollTop = pre.scrollHeight
+    }
+
+    /**
+     * Run an individual test based on the id
+     */
+    async _onRunTest(event) {
+        if (!game.user.isGM) return ui.notifications.warn('Only the GM can run tests')
+        const testId = event.currentTarget.dataset.testid
+        try {
+            switch (testId) {
+                case 'simulatePending': {
+                    const res = await game.rnkPatrol.simulatePendingFlow()
+                    this._appendTestOutput(`simulatePending result: ${JSON.stringify(res)}`)
+                    break
+                }
+                case 'simulateBribe': {
+                    const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+                    if (!token) return ui.notifications.warn('Select a token to run bribe simulation')
+                    const actorId = token.actor?.id
+                    const patrol = game.rnkPatrol.manager?.getPatrol(game.rnkPatrol.manager?.getPatrolForToken(token.id)?.id) || game.rnkPatrol.manager?.getPatrol([...game.rnkPatrol.manager._patrols.keys()][0])
+                    const patrolId = patrol?.id
+                    const res = await game.rnkPatrol.simulateBribeFlow(actorId, getSetting('briberyBaseCost', 50), patrolId)
+                    this._appendTestOutput(`simulateBribe result: ${JSON.stringify(res)}`)
+                    break
+                }
+                case 'simulateUndo': {
+                    const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+                    if (!token) return ui.notifications.warn('Select a token to run undo simulation')
+                    const actorId = token.actor?.id
+                    const amount = 10
+                    const res = await game.rnkPatrol.simulateTheftUndoFlow(actorId, amount)
+                    this._appendTestOutput(`simulateUndo result: ${JSON.stringify(res)}`)
+                    break
+                }
+                case 'simulateMultiUndo': {
+                    const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+                    if (!token) return ui.notifications.warn('Select a token to run undo simulation')
+                    const res = await game.rnkPatrol.runTestById('simulateMultiUndo')
+                    this._appendTestOutput(`simulateMultiUndo result: ${JSON.stringify(res)}`)
+                    break
+                }
+                case 'adapterTest': {
+                    const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+                    if (!token) return ui.notifications.warn('Select a token to run adapter test')
+                    const adapter = game.rnkPatrol.systemAdapters.getAdapter(token.actor?.system?.id || game.system.id)
+                    if (!adapter) return ui.notifications.warn('Adapter not available for this system')
+                    const hp = adapter.getActorHp?.(token)
+                    const maxHp = adapter.getActorMaxHp?.(token)
+                    const ac = adapter.getActorAc?.(token.actor)
+                    const items = adapter.getAttackItems?.(token.actor) || []
+                    const est = await (adapter.estimateBestAttackForToken?.(token) || null)
+                    const msg = `Adapter test: HP=${hp}/${maxHp} AC=${ac} Items=${items.length} Estimate=${JSON.stringify(est)}`
+                    this._appendTestOutput(msg)
+                    break
+                }
+                case 'midiTest': {
+                    const token = canvas.tokens.controlled[0] || canvas.tokens.placeables[0]
+                    const target = canvas.tokens.placeables.find(t => t.id !== token.id)
+                    if (!token || !target) return ui.notifications.warn('Select an attacker token and ensure there is a target')
+                    const adapter = game.rnkPatrol.systemAdapters.getAdapter(token.actor?.system?.id || game.system.id)
+                    const items = adapter.getAttackItems?.(token.actor) || []
+                    if (!items.length) return ui.notifications.warn('Selected actor has no attack items')
+                    const workflow = await adapter.rollItemUse(items[0], token, [target])
+                    this._appendTestOutput(`Midi test result: ${workflow ? JSON.stringify({ attackRoll: workflow?.attackRoll?.total, damage: workflow?.damageTotal || workflow?.damage?.total }) : 'no workflow returned'}`)
+                    break
+                }
+                case 'autoResolve': {
+                    const selected = canvas.tokens.controlled || []
+                    if (selected.length < 2) return ui.notifications.warn('Select at least 2 tokens to run autoResolve')
+                    const combat = await Combat.create({ scene: canvas.scene.id, active: true })
+                    await combat.createEmbeddedDocuments('Combatant', selected.slice(0,2).map(t => ({ tokenId: t.id, actorId: t.actor?.id })))
+                    await game.rnkPatrol.aiService.autoResolveCombat(combat)
+                    this._appendTestOutput('autoResolve invoked on test combat')
+                    break
+                }
+                default:
+                    this._appendTestOutput(`Unknown test: ${testId}`, 'warn')
+            }
+        } catch (err) {
+            console.error('Test failed', err)
+            this._appendTestOutput(`Test ${testId} failed: ${err?.message || err}`, 'error')
+        }
+    }
+
+    async _onRunAllTests() {
+        const res = await game.rnkPatrol?.runAllTests?.()
+        this._appendTestOutput('Run all tests: ' + JSON.stringify(res || {}))
+    }
     
     /**
      * Visit a jail scene
@@ -619,6 +1735,25 @@ export class GMHubApp extends Application {
         const scene = game.scenes.get(sceneId);
         if (scene) {
             await scene.view();
+        }
+    }
+    
+    /**
+     * Reset a jail scene (remove guards so they respawn on next capture)
+     */
+    async _resetJail(event) {
+        const sceneId = event.currentTarget.dataset.sceneId;
+        const scene = game.scenes.get(sceneId);
+        if (!scene) return;
+        
+        const confirmed = await Dialog.confirm({
+            title: 'Reset Jail Scene',
+            content: `<p>Reset jail scene "${scene.name}"? This will remove all guards. They will respawn (scaled to party level) on the next capture.</p>`
+        });
+        
+        if (confirmed && game.rnkPatrol?.jailSystem) {
+            await game.rnkPatrol.jailSystem.resetJailScene(sceneId);
+            this.render(false);
         }
     }
     
@@ -733,6 +1868,29 @@ export class GMHubApp extends Application {
                     removed++;
                 }
             }
+            // Also clear any stored waypoints for this scene so deleted waypoints don't return
+            try {
+                if (canvas.scene) {
+                    await canvas.scene.setFlag(MODULE_ID, 'waypoints', []);
+
+                    // Remove any lingering waypoint visuals from the canvas
+                    if (canvas.controls?.children) {
+                        const toRemove = [];
+                        for (const child of canvas.controls.children) {
+                            // Best-effort detection for waypoint visuals created by this module
+                            if (child instanceof PIXI.Container && child.bg instanceof PIXI.Graphics && child.icon instanceof PIXI.Text) {
+                                toRemove.push(child);
+                            }
+                        }
+                        for (const container of toRemove) {
+                            if (!container.destroyed) container.destroy({ children: true });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error clearing waypoints after deleting patrols', err);
+            }
+
             ui.notifications.info(`Deleted ${removed} patrols and their waypoints from this scene.`);
         } else {
             // Just clear graphics
@@ -797,6 +1955,10 @@ export class GMHubApp extends Application {
         // Cleanup
         Hooks.off(`${MODULE_ID}.patrolUpdate`, this._onPatrolUpdate);
         this._stopAutoRefresh();
+        if (this._deferredRenderTimer) {
+            clearTimeout(this._deferredRenderTimer);
+            this._deferredRenderTimer = null;
+        }
         return super.close(options);
     }
 
@@ -806,10 +1968,11 @@ export class GMHubApp extends Application {
     _startAutoRefresh() {
         this._stopAutoRefresh();
         this.refreshInterval = setInterval(() => {
-            if (this.rendered && !this.isMinimized) {
+            // Don't auto-refresh while minimized, not rendered, or when editing fields
+            if (this.rendered && !this.isMinimized && !this._suspendAutoRefresh) {
                 this.render(false);
             }
-        }, 5000); // Refresh every 5 seconds
+        }, 15000); // Refresh every 15 seconds (reduced frequency)
     }
 
     /**
@@ -826,9 +1989,30 @@ export class GMHubApp extends Application {
      * Handle patrol update event
      */
     _onPatrolUpdate(patrol) {
-        if (this.rendered) {
-            this.render(false);
+        if (!this.rendered) return;
+
+        // Check if user is actively editing
+        const isEditing = this.element?.length && document.activeElement && 
+            this.element[0]?.contains(document.activeElement) &&
+            ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+
+        // If auto-refresh is suspended or user is editing, defer the render
+        if (this._suspendAutoRefresh || isEditing) {
+            if (this._deferredRenderTimer) clearTimeout(this._deferredRenderTimer);
+            // Attempt to re-render after user stops editing
+            this._deferredRenderTimer = setTimeout(() => {
+                const stillEditing = this.element?.length && document.activeElement && 
+                    this.element[0]?.contains(document.activeElement) &&
+                    ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+                if (!this._suspendAutoRefresh && !stillEditing && this.rendered && !this.isMinimized) {
+                    this.render(false);
+                }
+                this._deferredRenderTimer = null;
+            }, 1500);
+            return;
         }
+
+        this.render(false);
     }
 
     // ==================== Action Handlers ====================
@@ -867,6 +2051,12 @@ export class GMHubApp extends Application {
     }
 
     async _onCreatePatrol() {
+        // Check if system is ready
+        if (!game.rnkPatrol?.manager) {
+            ui.notifications.warn('Patrol system is still initializing. Please wait a moment and try again.');
+            return;
+        }
+        
         const { PatrolCreatorApp } = await import('./PatrolCreatorApp.js');
         new PatrolCreatorApp().render(true);
     }
@@ -1089,6 +2279,21 @@ export class GMHubApp extends Application {
         }
 
         return new GMHubApp().render(true);
+    }
+
+    /** @override */
+    async render(force = false, options = {}) {
+        // Preserve scroll position in the main content area across re-renders
+        const content = this.element?.find('.hub-content')[0];
+        const scrollTop = content ? content.scrollTop : 0;
+
+        await super.render(force, options);
+
+        // Restore scroll position after render
+        const newContent = this.element?.find('.hub-content')[0];
+        if (newContent) newContent.scrollTop = scrollTop;
+
+        return this;
     }
 }
 

@@ -1,634 +1,683 @@
-<div class="gm-hub-container">
-    {{!-- Header with global controls --}}
-    <header class="hub-header">
-        <div class="hub-title">
-            <i class="fas fa-satellite-dish"></i>
-            <h1>Patrol Command Center</h1>
+<div class="hub">
+    {{!-- Left Sidebar Navigation --}}
+    <nav class="hub-nav">
+        <div class="hub-logo">
+            <img src="modules/rnk-patrol/assets/pics/Vespera.png" alt="RNK">
+            <span>RNK Patrol</span>
         </div>
-        <div class="hub-global-controls">
-            <button type="button" data-action="start-all" class="hub-btn success" title="Start All Patrols">
-                <i class="fas fa-play"></i>
-            </button>
-            <button type="button" data-action="pause-all" class="hub-btn warning" title="Pause All">
-                <i class="fas fa-pause"></i>
-            </button>
-            <button type="button" data-action="stop-all" class="hub-btn danger" title="Stop All">
-                <i class="fas fa-stop"></i>
-            </button>
-            <div class="divider"></div>
-            <button type="button" data-action="create-patrol" class="hub-btn primary" title="Create New Patrol">
-                <i class="fas fa-plus"></i>
-            </button>
-            <button type="button" data-action="refresh" class="hub-btn" title="Refresh">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+        <div class="nav-tabs" data-group="hub-tabs">
+            <a class="nav-item active" data-tab="patrols" title="Patrols">
+                <i class="fas fa-route"></i>
+                <span>Patrols</span>
+            </a>
+            <a class="nav-item" data-tab="detection" title="Detection">
+                <i class="fas fa-eye"></i>
+                <span>Detection</span>
+            </a>
+            <a class="nav-item" data-tab="capture" title="Capture">
+                <i class="fas fa-handcuffs"></i>
+                <span>Capture</span>
+            </a>
+            <a class="nav-item" data-tab="jails" title="Jails">
+                <i class="fas fa-dungeon"></i>
+                <span>Jails</span>
+            </a>
+            <a class="nav-item" data-tab="telegraph" title="Telegraph">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Telegraph</span>
+            </a>
+            <a class="nav-item" data-tab="barks" title="Barks">
+                <i class="fas fa-volume-up"></i>
+                <span>Barks</span>
+            </a>
+            <a class="nav-item" data-tab="ai" title="AI System">
+                <i class="fas fa-brain"></i>
+                <span>AI</span>
+            </a>
+            <a class="nav-item" data-tab="activity" title="Activity">
+                <i class="fas fa-history"></i>
+                <span>Activity</span>
+            </a>
+            <a class="nav-item" data-tab="settings" title="Settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
         </div>
-    </header>
-
-    {{!-- Statistics Dashboard --}}
-    <section class="hub-stats">
-        <div class="stat-card total">
-            <div class="stat-icon"><i class="fas fa-route"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{stats.total}}</span>
-                <span class="stat-label">Total Patrols</span>
-            </div>
+        <div class="nav-footer">
+            <span class="version">v{{version}}</span>
         </div>
-        <div class="stat-card active">
-            <div class="stat-icon"><i class="fas fa-play-circle"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{stats.active}}</span>
-                <span class="stat-label">Active</span>
-            </div>
-        </div>
-        <div class="stat-card paused">
-            <div class="stat-icon"><i class="fas fa-pause-circle"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{stats.paused}}</span>
-                <span class="stat-label">Paused</span>
-            </div>
-        </div>
-        <div class="stat-card alert">
-            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{stats.alert}}</span>
-                <span class="stat-label">On Alert</span>
-            </div>
-        </div>
-        <div class="stat-card coverage">
-            <div class="stat-icon"><i class="fas fa-eye"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{stats.coverage}}%</span>
-                <span class="stat-label">Coverage</span>
-            </div>
-        </div>
-    </section>
-
-    {{!-- Tab Navigation --}}
-    <nav class="hub-tabs" data-group="hub-tabs">
-        <a class="hub-tab active" data-tab="patrols">
-            <i class="fas fa-route"></i> Patrols
-        </a>
-        <a class="hub-tab" data-tab="tokens">
-            <i class="fas fa-users"></i> Quick Setup
-        </a>
-        <a class="hub-tab" data-tab="capture">
-            <i class="fas fa-handcuffs"></i> Capture
-        </a>
-        <a class="hub-tab" data-tab="barks">
-            <i class="fas fa-volume-up"></i> Barks
-        </a>
-        <a class="hub-tab" data-tab="telegraph">
-            <i class="fas fa-broadcast-tower"></i> Telegraph
-        </a>
-        <a class="hub-tab" data-tab="jails">
-            <i class="fas fa-dungeon"></i> Jails
-        </a>
-        <a class="hub-tab" data-tab="activity">
-            <i class="fas fa-history"></i> Activity
-        </a>
-        <a class="hub-tab" data-tab="settings">
-            <i class="fas fa-cog"></i> Settings
-        </a>
     </nav>
 
-    {{!-- Tab Content --}}
-    <div class="hub-content">
-        {{!-- Patrols Tab --}}
-        <div class="tab active" data-tab="patrols" data-group="hub-tabs">
-            {{!-- Search and Filter Bar --}}
-            <div class="patrol-toolbar">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" class="patrol-search" placeholder="Search patrols...">
+    {{!-- Main Content Area --}}
+    <main class="hub-main">
+        {{!-- PATROLS TAB --}}
+        <section class="tab-panel active" data-tab="patrols" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/Main.jpg" alt="Patrol Command">
+                    <div class="image-overlay">
+                        <h2>Patrol Command</h2>
+                        <p>Manage your patrol routes and guard assignments</p>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <button type="button" class="filter-btn active" data-filter="all">All</button>
-                    <button type="button" class="filter-btn" data-filter="active">Active</button>
-                    <button type="button" class="filter-btn" data-filter="paused">Paused</button>
-                    <button type="button" class="filter-btn" data-filter="stopped">Stopped</button>
-                    <button type="button" class="filter-btn" data-filter="alert">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </button>
-                </div>
-            </div>
-
-            {{!-- Patrol Grid --}}
-            <div class="patrol-grid">
-                {{#if hasPatrols}}
-                    {{#each patrols}}
-                    <div class="patrol-card {{stateClass}} {{#if isAlert}}is-alert{{/if}} {{#if (eq ../selectedPatrolId id)}}selected{{/if}}" 
-                         data-patrol-id="{{id}}" 
-                         data-patrol-name="{{name}}"
-                         data-state="{{state}}">
-                        
-                        {{!-- Status Indicator --}}
-                        <div class="patrol-status-indicator"></div>
-                        
-                        {{!-- Card Header --}}
-                        <div class="patrol-card-header">
-                            <img src="{{tokenImg}}" alt="{{tokenName}}" class="token-portrait">
-                            <div class="patrol-info">
-                                <h3 class="patrol-name">{{name}}</h3>
-                                <span class="token-name">{{tokenName}}</span>
-                            </div>
-                            <div class="mode-badge" title="{{modeLabel}}">
-                                <i class="fas {{modeIcon}}"></i>
-                            </div>
+                <div class="panel-content">
+                    <div class="panel-header">
+                        <div class="stats-row">
+                            <div class="stat"><span class="val">{{stats.total}}</span><span class="lbl">Total</span></div>
+                            <div class="stat active"><span class="val">{{stats.active}}</span><span class="lbl">Active</span></div>
+                            <div class="stat paused"><span class="val">{{stats.paused}}</span><span class="lbl">Paused</span></div>
+                            <div class="stat alert"><span class="val">{{stats.alert}}</span><span class="lbl">Alert</span></div>
                         </div>
-
-                        {{!-- Progress/Stats --}}
-                        <div class="patrol-card-stats">
-                            <div class="stat-item">
-                                <i class="fas fa-map-pin"></i>
-                                <span>{{currentWaypoint}}/{{waypointCount}}</span>
-                            </div>
-                            <div class="stat-item">
-                                <i class="fas fa-random"></i>
-                                <span>{{patternLabel}}</span>
-                            </div>
-                            {{#if isAlert}}
-                            <div class="stat-item alert">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span>{{alertLabel}}</span>
-                            </div>
-                            {{/if}}
-                        </div>
-
-                        {{!-- Card Controls --}}
-                        <div class="patrol-card-controls">
-                            {{#if isActive}}
-                                <button type="button" data-action="pause-patrol" class="ctrl-btn" title="Pause">
-                                    <i class="fas fa-pause"></i>
-                                </button>
-                                <button type="button" data-action="stop-patrol" class="ctrl-btn" title="Stop">
-                                    <i class="fas fa-stop"></i>
-                                </button>
-                            {{else if isPaused}}
-                                <button type="button" data-action="resume-patrol" class="ctrl-btn success" title="Resume">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button type="button" data-action="stop-patrol" class="ctrl-btn" title="Stop">
-                                    <i class="fas fa-stop"></i>
-                                </button>
-                            {{else}}
-                                <button type="button" data-action="start-patrol" class="ctrl-btn success" title="Start">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                            {{/if}}
-                            <button type="button" data-action="pan-to-patrol" class="ctrl-btn" title="Pan to Token">
-                                <i class="fas fa-crosshairs"></i>
-                            </button>
-                            <button type="button" data-action="edit-patrol" class="ctrl-btn" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" data-action="delete-patrol" class="ctrl-btn danger" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                        <div class="controls-row">
+                            <button type="button" data-action="start-all" class="btn success" title="Start All"><i class="fas fa-play"></i></button>
+                            <button type="button" data-action="pause-all" class="btn warning" title="Pause All"><i class="fas fa-pause"></i></button>
+                            <button type="button" data-action="stop-all" class="btn danger" title="Stop All"><i class="fas fa-stop"></i></button>
+                            <button type="button" data-action="create-patrol" class="btn primary" title="New Patrol"><i class="fas fa-plus"></i> New</button>
                         </div>
                     </div>
-                    {{/each}}
-                {{else}}
-                    <div class="no-patrols">
-                        <i class="fas fa-route"></i>
-                        <h3>No Patrols Found</h3>
-                        <p>Create your first patrol to get started!</p>
-                        <button type="button" data-action="create-patrol" class="hub-btn primary large">
-                            <i class="fas fa-plus"></i> Create Patrol
-                        </button>
-                    </div>
-                {{/if}}
-            </div>
-        </div>
-
-        {{!-- Quick Setup Tab (Tokens) --}}
-        <div class="tab" data-tab="tokens" data-group="hub-tabs">
-            <div class="quick-setup-header">
-                <h2><i class="fas fa-magic"></i> Quick Patrol Setup</h2>
-                <p>Click a token to instantly create a patrol for it</p>
-            </div>
-            
-            <div class="token-grid">
-                {{#each sceneTokens}}
-                <div class="token-card {{#if hasPatrol}}has-patrol{{/if}}" 
-                     data-token-id="{{id}}"
-                     data-action="quick-patrol">
-                    <img src="{{img}}" alt="{{name}}">
-                    <span class="token-label">{{name}}</span>
-                    {{#if hasPatrol}}
-                    <div class="patrol-indicator">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    {{/if}}
-                </div>
-                {{else}}
-                <div class="no-tokens">
-                    <i class="fas fa-ghost"></i>
-                    <p>No tokens on this scene</p>
-                </div>
-                {{/each}}
-            </div>
-        </div>
-
-        {{!-- Capture System Tab --}}
-        <div class="tab" data-tab="capture" data-group="hub-tabs">
-            <div class="system-settings-panel">
-                <div class="panel-header">
-                    <h2><i class="fas fa-handcuffs"></i> Capture System Settings</h2>
-                    <p>Configure what happens when patrols catch players</p>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-toggle-on"></i> System Toggle</h3>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="captureEnabled" {{#if captureEnabled}}checked{{/if}}>
-                            Enable Capture System
-                        </label>
-                        <span class="setting-hint">When enabled, patrols can capture players within range</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>Capture Range (grid units)</label>
-                        <input type="number" name="captureRange" value="{{captureRange}}" min="1" max="10" step="1">
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-dice"></i> Outcome Weights</h3>
-                    <p class="section-hint">Adjust the probability of each capture outcome (must total 100%)</p>
-                    
-                    <div class="outcome-weights">
-                        <div class="weight-row">
-                            <label><i class="fas fa-sword"></i> Combat</label>
-                            <input type="number" name="weight-combat" value="{{outcomeWeights.combat}}" min="0" max="100">
-                            <span class="weight-percent">%</span>
-                        </div>
-                        <div class="weight-row">
-                            <label><i class="fas fa-coins"></i> Theft & Release</label>
-                            <input type="number" name="weight-theft" value="{{outcomeWeights.theft}}" min="0" max="100">
-                            <span class="weight-percent">%</span>
-                        </div>
-                        <div class="weight-row">
-                            <label><i class="fas fa-eye-slash"></i> Blindfold & Relocate</label>
-                            <input type="number" name="weight-relocate" value="{{outcomeWeights.relocate}}" min="0" max="100">
-                            <span class="weight-percent">%</span>
-                        </div>
-                        <div class="weight-row">
-                            <label><i class="fas fa-hand-paper"></i> Disregard</label>
-                            <input type="number" name="weight-disregard" value="{{outcomeWeights.disregard}}" min="0" max="100">
-                            <span class="weight-percent">%</span>
-                        </div>
-                        <div class="weight-row">
-                            <label><i class="fas fa-dungeon"></i> Send to Jail</label>
-                            <input type="number" name="weight-jail" value="{{outcomeWeights.jail}}" min="0" max="100">
-                            <span class="weight-percent">%</span>
-                        </div>
-                    </div>
-                    <div class="weight-total">
-                        Total: <span class="total-value">100</span>%
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-money-bill-wave"></i> Bribery Settings</h3>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="briberyEnabled" {{#if briberyEnabled}}checked{{/if}}>
-                            Enable Bribery
-                        </label>
-                        <span class="setting-hint">Allow players to attempt bribing guards</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>Base Bribe Cost (gold)</label>
-                        <input type="number" name="briberyBaseCost" value="{{briberyBaseCost}}" min="10" max="1000" step="10">
-                    </div>
-                    <div class="setting-row">
-                        <label>Bribery Success Chance (%)</label>
-                        <input type="range" name="briberyChance" value="{{briberyChance}}" min="0" max="100" step="5">
-                        <span class="range-value">{{briberyChance}}%</span>
-                    </div>
-                </div>
-
-                <div class="panel-footer">
-                    <button type="button" data-action="save-capture-settings" class="hub-btn primary">
-                        <i class="fas fa-save"></i> Save Capture Settings
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {{!-- Barks Tab --}}
-        <div class="tab" data-tab="barks" data-group="hub-tabs">
-            <div class="system-settings-panel">
-                <div class="panel-header">
-                    <h2><i class="fas fa-volume-up"></i> Bark Audio System</h2>
-                    <p>Configure voice lines for patrol actions</p>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-toggle-on"></i> Audio Settings</h3>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="barksEnabled" {{#if barksEnabled}}checked{{/if}}>
-                            Enable Barks
-                        </label>
-                        <span class="setting-hint">Play voice clips when patrols take actions</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>Bark Volume</label>
-                        <input type="range" name="barkVolume" value="{{barkVolume}}" min="0" max="1" step="0.1">
-                        <span class="range-value">{{barkVolumePercent}}%</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>Cooldown (ms)</label>
-                        <input type="number" name="barkCooldown" value="{{barkCooldown}}" min="0" max="10000" step="500">
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-folder-open"></i> Bark Categories</h3>
-                    <p class="section-hint">Custom audio paths for each bark category. Leave empty to use defaults.</p>
-                    
-                    <div class="bark-categories">
-                        {{#each barkCategories}}
-                        <div class="bark-category">
-                            <label><i class="{{icon}}"></i> {{label}}</label>
-                            <div class="bark-path-row">
-                                <input type="text" name="bark-path-{{key}}" value="{{path}}" placeholder="modules/rnk-patrol/assets/audio/barks/{{key}}/">
-                                <button type="button" data-action="test-bark" data-category="{{key}}" class="hub-btn small" title="Test">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button type="button" data-action="browse-bark" data-category="{{key}}" class="hub-btn small" title="Browse">
-                                    <i class="fas fa-folder"></i>
-                                </button>
-                            </div>
-                        </div>
-                        {{/each}}
-                    </div>
-                </div>
-
-                <div class="panel-footer">
-                    <button type="button" data-action="save-bark-settings" class="hub-btn primary">
-                        <i class="fas fa-save"></i> Save Bark Settings
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {{!-- Telegraph Tab --}}
-        <div class="tab" data-tab="telegraph" data-group="hub-tabs">
-            <div class="system-settings-panel">
-                <div class="panel-header">
-                    <h2><i class="fas fa-broadcast-tower"></i> Telegraph Visual System</h2>
-                    <p>Configure visual warnings before patrol spawns</p>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-toggle-on"></i> Telegraph Settings</h3>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="telegraphEnabled" {{#if telegraphEnabled}}checked{{/if}}>
-                            Enable Telegraph
-                        </label>
-                        <span class="setting-hint">Show visual warning before patrol appears</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="telegraphGMOnly" {{#if telegraphGMOnly}}checked{{/if}}>
-                            GM Only
-                        </label>
-                        <span class="setting-hint">Only show telegraph effects to the GM</span>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-paint-brush"></i> Visual Style</h3>
-                    <div class="setting-row">
-                        <label>Effect Style</label>
-                        <select name="telegraphStyle">
-                            <option value="ripple" {{#if (eq telegraphStyle "ripple")}}selected{{/if}}>Ripple Effect</option>
-                            <option value="runes" {{#if (eq telegraphStyle "runes")}}selected{{/if}}>Spinning Runes</option>
-                            <option value="glow" {{#if (eq telegraphStyle "glow")}}selected{{/if}}>Pulsing Glow</option>
-                            <option value="portal" {{#if (eq telegraphStyle "portal")}}selected{{/if}}>Portal Opening</option>
-                        </select>
-                    </div>
-                    <div class="setting-row">
-                        <label>Duration (ms)</label>
-                        <input type="range" name="telegraphDuration" value="{{telegraphDuration}}" min="500" max="3000" step="100">
-                        <span class="range-value">{{telegraphDuration}}ms</span>
-                    </div>
-                    <div class="setting-row">
-                        <label>Effect Color</label>
-                        <input type="color" name="telegraphColor" value="{{telegraphColor}}">
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-eye"></i> Preview</h3>
-                    <div class="telegraph-preview">
-                        <button type="button" data-action="preview-telegraph" class="hub-btn">
-                            <i class="fas fa-play"></i> Preview Telegraph Effect
-                        </button>
-                    </div>
-                </div>
-
-                <div class="panel-footer">
-                    <button type="button" data-action="save-telegraph-settings" class="hub-btn primary">
-                        <i class="fas fa-save"></i> Save Telegraph Settings
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {{!-- Jails Tab --}}
-        <div class="tab" data-tab="jails" data-group="hub-tabs">
-            <div class="system-settings-panel">
-                <div class="panel-header">
-                    <h2><i class="fas fa-dungeon"></i> Jail Management</h2>
-                    <p>Create and manage jail scenes for captured players</p>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-toggle-on"></i> Jail Settings</h3>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="jailEnabled" {{#if jailEnabled}}checked{{/if}}>
-                            Enable Jail System
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Default Jail Duration (seconds)</label>
-                        <input type="number" name="jailDefaultDuration" value="{{jailDefaultDuration}}" min="30" max="600" step="30">
-                    </div>
-                    <div class="setting-row">
-                        <label>
-                            <input type="checkbox" name="jailEscapeEnabled" {{#if jailEscapeEnabled}}checked{{/if}}>
-                            Enable Escape Attempts
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Escape DC</label>
-                        <input type="number" name="jailEscapeDC" value="{{jailEscapeDC}}" min="5" max="30" step="1">
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-plus-square"></i> Create Jail Scene</h3>
-                    <p class="section-hint">Select a template to create a new jail scene</p>
-                    
-                    <div class="jail-templates">
-                        {{#each jailTemplates}}
-                        <div class="jail-template" data-template="{{key}}" data-action="create-jail">
-                            <i class="{{icon}}"></i>
-                            <span class="template-name">{{name}}</span>
-                            <span class="template-desc">{{description}}</span>
-                        </div>
-                        {{/each}}
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3><i class="fas fa-list"></i> Existing Jails</h3>
-                    <p class="section-hint">Jail scenes are created on-demand when players are captured (or you can create them manually)</p>
-                    <div class="existing-jails">
-                        {{#if jailScenes.length}}
-                            {{#each jailScenes}}
-                            <div class="jail-row" data-scene-id="{{sceneId}}">
-                                <span class="jail-name"><i class="fas fa-dungeon"></i> {{sceneName}}</span>
-                                <span class="prisoner-count">{{prisonerCount}} prisoners</span>
-                                <div class="jail-controls">
-                                    <button type="button" data-action="visit-jail" data-scene-id="{{sceneId}}" class="hub-btn small" title="Visit">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" data-action="delete-jail" data-scene-id="{{sceneId}}" class="hub-btn small danger" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                    <div class="patrol-list">
+                        {{#if hasPatrols}}
+                            {{#each patrols}}
+                            <div class="patrol-card {{stateClass}} {{#if isAlert}}alert{{/if}}" data-patrol-id="{{id}}">
+                                <img src="{{tokenImg}}" class="patrol-avatar" alt="{{tokenName}}">
+                                <div class="patrol-info">
+                                    <strong>{{name}}</strong>
+                                    <small>{{tokenName}} • {{modeLabel}}</small>
+                                </div>
+                                <div class="patrol-status">
+                                    <span class="status-dot"></span>
+                                    {{stateLabel}}
+                                </div>
+                                <div class="patrol-actions">
+                                    {{#if isActive}}
+                                    <button data-action="pause-patrol" class="btn-sm" title="Pause"><i class="fas fa-pause"></i></button>
+                                    {{else}}
+                                    <button data-action="start-patrol" class="btn-sm" title="Start"><i class="fas fa-play"></i></button>
+                                    {{/if}}
+                                    <button data-action="edit-patrol" class="btn-sm" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button data-action="delete-patrol" class="btn-sm danger" title="Delete"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                             {{/each}}
                         {{else}}
-                            <div class="no-jails">
-                                <i class="fas fa-dungeon"></i>
-                                <p>No jail scenes created yet. They will be created automatically when players are sent to jail.</p>
+                            <div class="empty-state">
+                                <i class="fas fa-route"></i>
+                                <p>No patrols created yet</p>
+                                <button type="button" data-action="create-patrol" class="btn primary">Create First Patrol</button>
                             </div>
                         {{/if}}
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <div class="settings-section">
-                    <h3><i class="fas fa-users"></i> Current Prisoners</h3>
+        {{!-- DETECTION TAB --}}
+        <section class="tab-panel" data-tab="detection" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/2.jpg" alt="Detection System">
+                    <div class="image-overlay">
+                        <h2>Detection System</h2>
+                        <p>Configure how patrols detect players</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label><input type="checkbox" name="enableDetection" {{#if enableDetection}}checked{{/if}}> Enable Detection</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Detection Range (tiles)</label>
+                            <input type="number" name="defaultDetectionRange" value="{{defaultDetectionRange}}" min="1" max="50">
+                        </div>
+                        <div class="form-group">
+                            <label>Detection Trigger</label>
+                            <select name="detectionTrigger">
+                                <option value="notify" {{#if (eq detectionTrigger "notify")}}selected{{/if}}>Notify GM</option>
+                                <option value="alert" {{#if (eq detectionTrigger "alert")}}selected{{/if}}>Alert Mode</option>
+                                <option value="combat" {{#if (eq detectionTrigger "combat")}}selected{{/if}}>Start Combat</option>
+                                <option value="macro" {{#if (eq detectionTrigger "macro")}}selected{{/if}}>Run Macro</option>
+                                <option value="none" {{#if (eq detectionTrigger "none")}}selected{{/if}}>None</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Sight Check Method</label>
+                            <select name="sightCheckMethod">
+                                <option value="ray" {{#if (eq sightCheckMethod "ray")}}selected{{/if}}>Ray Cast</option>
+                                <option value="los" {{#if (eq sightCheckMethod "los")}}selected{{/if}}>Line of Sight</option>
+                                <option value="range" {{#if (eq sightCheckMethod "range")}}selected{{/if}}>Range Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="detectHiddenPlayers" {{#if detectHiddenPlayers}}checked{{/if}}> Detect Hidden Players</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="detectInvisible" {{#if detectInvisible}}checked{{/if}}> Detect Invisible Tokens</label>
+                        </div>
+
+                        <h4>Performance</h4>
+                        <div class="form-group">
+                            <label>Max Active Patrols</label>
+                            <input type="number" name="maxActivePatrols" value="{{maxActivePatrols}}" min="1" max="50">
+                        </div>
+                        <div class="form-group">
+                            <label>Update Interval (ms)</label>
+                            <input type="number" name="updateInterval" value="{{updateInterval}}" min="100" max="2000" step="100">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" data-action="save-detection-settings" class="btn primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{!-- CAPTURE TAB --}}
+        <section class="tab-panel" data-tab="capture" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/final mercy.jpg" alt="Capture System">
+                    <div class="image-overlay">
+                        <h2>Capture System</h2>
+                        <p>Configure how guards handle captured players</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label><input type="checkbox" name="captureEnabled" {{#if captureEnabled}}checked{{/if}}> Enable Capture System</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Capture Range (tiles)</label>
+                            <input type="number" name="captureRange" value="{{captureRange}}" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="briberyEnabled" {{#if briberyEnabled}}checked{{/if}}> Allow Bribery</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Base Bribe Cost</label>
+                            <input type="number" name="briberyBaseCost" value="{{briberyBaseCost}}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bribery Success Chance (%)</label>
+                            <input type="range" name="briberyChance" value="{{briberyChance}}" min="0" max="100">
+                            <span class="range-val">{{briberyChance}}%</span>
+                        </div>
+                        
+                        <h4>Outcome Weights</h4>
+                        <div class="weight-group">
+                            <div class="weight-row">
+                                <label>Combat</label>
+                                <input type="range" name="weight-combat" value="{{outcomeWeights.combat}}" min="0" max="100">
+                                <span class="range-val">{{outcomeWeights.combat}}</span>
+                            </div>
+                            <div class="weight-row">
+                                <label>Theft</label>
+                                <input type="range" name="weight-theft" value="{{outcomeWeights.theft}}" min="0" max="100">
+                                <span class="range-val">{{outcomeWeights.theft}}</span>
+                            </div>
+                            <div class="weight-row">
+                                <label>Jail</label>
+                                <input type="range" name="weight-jail" value="{{outcomeWeights.jail}}" min="0" max="100">
+                                <span class="range-val">{{outcomeWeights.jail}}</span>
+                            </div>
+                            <div class="weight-row">
+                                <label>Relocate</label>
+                                <input type="range" name="weight-relocate" value="{{outcomeWeights.relocate}}" min="0" max="100">
+                                <span class="range-val">{{outcomeWeights.relocate}}</span>
+                            </div>
+                            <div class="weight-row">
+                                <label>Disregard</label>
+                                <input type="range" name="weight-disregard" value="{{outcomeWeights.disregard}}" min="0" max="100">
+                                <span class="range-val">{{outcomeWeights.disregard}}</span>
+                            </div>
+                        </div>
+
+                        <h4>Bleed-Out Settings</h4>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="bleedOutEnabled" {{#if bleedOutEnabled}}checked{{/if}}> Enable Bleed-Out Saves</label>
+                        </div>
+                        <div class="form-group">
+                            <label>HP Threshold (%)</label>
+                            <input type="range" name="bleedOutThreshold" value="{{bleedOutThreshold}}" min="5" max="50">
+                            <span class="range-val">{{bleedOutThreshold}}%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Base DC</label>
+                            <input type="number" name="bleedOutBaseDC" value="{{bleedOutBaseDC}}" min="5" max="25">
+                        </div>
+                        <div class="form-group">
+                            <label>Control</label>
+                            <select name="bleedOutPlayerControl">
+                                <option value="player" {{#if (eq bleedOutPlayerControl "player")}}selected{{/if}}>Player Choice</option>
+                                <option value="gm" {{#if (eq bleedOutPlayerControl "gm")}}selected{{/if}}>GM Only</option>
+                                <option value="auto" {{#if (eq bleedOutPlayerControl "auto")}}selected{{/if}}>Automatic</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" data-action="save-capture-settings" class="btn primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{!-- JAILS TAB --}}
+        <section class="tab-panel" data-tab="jails" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/terminal spiral.jpg" alt="Jail System">
+                    <div class="image-overlay">
+                        <h2>Jail System</h2>
+                        <p>Manage detention facilities and prisoners</p>
+                    </div>
+                </div>
+                <div class="panel-content jail-content-scrollable">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label><input type="checkbox" name="jailEnabled" {{#if jailEnabled}}checked{{/if}}> Enable Jail System</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Sentence (seconds)</label>
+                            <input type="number" name="jailDefaultDuration" value="{{jailDefaultDuration}}" min="10">
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="jailEscapeEnabled" {{#if jailEscapeEnabled}}checked{{/if}}> Allow Escape Attempts</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Escape DC</label>
+                            <input type="number" name="jailEscapeDC" value="{{jailEscapeDC}}" min="5" max="30">
+                        </div>
+                    </div>
+
+                    <h4>Active Jails</h4>
+                    <div class="jail-list">
+                        {{#if jailScenes.length}}
+                            {{#each jailScenes}}
+                            <div class="jail-item" data-scene-id="{{sceneId}}" data-config-key="{{configKey}}">
+                                <i class="fas fa-dungeon"></i>
+                                <div class="jail-info">
+                                    <strong>{{sceneName}}</strong>
+                                    <small>{{prisonerCount}} prisoners</small>
+                                </div>
+                                <div class="jail-actions">
+                                    <button data-action="edit-jail" data-scene-id="{{sceneId}}" data-config-key="{{configKey}}" class="btn-sm" title="Edit Jail Configuration"><i class="fas fa-cog"></i></button>
+                                    <button data-action="visit-jail" data-scene-id="{{sceneId}}" class="btn-sm" title="Visit"><i class="fas fa-eye"></i></button>
+                                    <button data-action="reset-jail" data-scene-id="{{sceneId}}" class="btn-sm" title="Reset"><i class="fas fa-redo"></i></button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="empty-state small">
+                                <p>No jail scenes configured</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    {{!-- JAIL TOKEN CONFIGURATION --}}
+                    <h4><i class="fas fa-users"></i> Guard & Inmate Tokens</h4>
+                    <p class="section-description">Select actors from compendiums or world actors to use for guards and inmates in jail scenes.</p>
+                    
+                    <div class="token-config-section">
+                        <div class="token-config-group">
+                            <label><i class="fas fa-shield-alt"></i> Default Guard Actor</label>
+                            <div class="token-selection">
+                                {{#if defaultGuardActor}}
+                                <div class="selected-actor">
+                                    <img src="{{defaultGuardActor.img}}" alt="{{defaultGuardActor.name}}">
+                                    <span>{{defaultGuardActor.name}}</span>
+                                    <button data-action="clear-default-guard" class="btn-sm danger" title="Clear"><i class="fas fa-times"></i></button>
+                                </div>
+                                {{else}}
+                                <span class="no-selection">No actor selected</span>
+                                {{/if}}
+                                <button data-action="pick-default-guard-compendium" class="btn-sm" title="Browse Compendiums">
+                                    <i class="fas fa-search"></i> Browse Compendiums
+                                </button>
+                                <button data-action="pick-default-guard-world" class="btn-sm" title="World Actors">
+                                    <i class="fas fa-globe"></i> World Actors
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="token-config-group">
+                            <label><i class="fas fa-user-lock"></i> Default Inmate Actor</label>
+                            <div class="token-selection">
+                                {{#if defaultInmateActor}}
+                                <div class="selected-actor">
+                                    <img src="{{defaultInmateActor.img}}" alt="{{defaultInmateActor.name}}">
+                                    <span>{{defaultInmateActor.name}}</span>
+                                    <button data-action="clear-default-inmate" class="btn-sm danger" title="Clear"><i class="fas fa-times"></i></button>
+                                </div>
+                                {{else}}
+                                <span class="no-selection">No actor selected</span>
+                                {{/if}}
+                                <button data-action="pick-default-inmate-compendium" class="btn-sm" title="Browse Compendiums">
+                                    <i class="fas fa-search"></i> Browse Compendiums
+                                </button>
+                                <button data-action="pick-default-inmate-world" class="btn-sm" title="World Actors">
+                                    <i class="fas fa-globe"></i> World Actors
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4>Current Prisoners</h4>
                     <div class="prisoner-list">
                         {{#if prisoners.length}}
                             {{#each prisoners}}
-                            <div class="prisoner-row" data-actor-id="{{actorId}}">
-                                <img src="{{img}}" alt="{{name}}" class="prisoner-portrait">
+                            <div class="prisoner-item" data-actor-id="{{actorId}}">
+                                <img src="{{img}}" class="prisoner-avatar" alt="{{name}}">
                                 <div class="prisoner-info">
-                                    <span class="prisoner-name">{{name}}</span>
-                                    <span class="prisoner-location">{{jailName}}</span>
-                                    <span class="time-remaining">{{timeRemaining}}</span>
+                                    <strong>{{name}}</strong>
+                                    <small>{{jailName}} • {{timeRemaining}}</small>
                                 </div>
-                                <div class="prisoner-controls">
-                                    <button type="button" data-action="release-prisoner" data-actor-id="{{actorId}}" class="hub-btn small success" title="Release">
-                                        <i class="fas fa-unlock"></i>
-                                    </button>
-                                    <button type="button" data-action="visit-prisoner" data-actor-id="{{actorId}}" class="hub-btn small" title="Visit">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                                <div class="prisoner-actions">
+                                    <button data-action="release-prisoner" data-actor-id="{{actorId}}" class="btn-sm success" title="Release"><i class="fas fa-unlock"></i></button>
                                 </div>
                             </div>
                             {{/each}}
                         {{else}}
-                            <div class="no-prisoners">
-                                <i class="fas fa-user-check"></i>
-                                <p>No prisoners currently held</p>
+                            <div class="empty-state small">
+                                <p>No prisoners currently detained</p>
                             </div>
                         {{/if}}
                     </div>
-                </div>
 
-                <div class="panel-footer">
-                    <button type="button" data-action="release-all-prisoners" class="hub-btn warning" {{#unless prisoners.length}}disabled{{/unless}}>
-                        <i class="fas fa-unlock-alt"></i> Release All Prisoners
-                    </button>
-                    <button type="button" data-action="save-jail-settings" class="hub-btn primary">
-                        <i class="fas fa-save"></i> Save Jail Settings
-                    </button>
+                    <div class="form-actions">
+                        <button type="button" data-action="save-jail-settings" class="btn primary">Save Changes</button>
+                        <button type="button" data-action="create-jail" class="btn">Create Jail Scene</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        {{!-- Activity Tab --}}
-        <div class="tab" data-tab="activity" data-group="hub-tabs">
-            <div class="activity-log">
-                {{#if activityLog.length}}
-                    {{#each activityLog}}
-                    <div class="activity-entry {{type}}">
-                        <span class="activity-time">{{time}}</span>
-                        <span class="activity-icon"><i class="fas {{icon}}"></i></span>
-                        <span class="activity-message">{{message}}</span>
-                    </div>
-                    {{/each}}
-                {{else}}
-                    <div class="no-activity">
-                        <i class="fas fa-history"></i>
-                        <p>No recent activity</p>
-                    </div>
-                {{/if}}
-            </div>
-        </div>
-
-        {{!-- Settings Tab --}}
-        <div class="tab" data-tab="settings" data-group="hub-tabs">
-            <div class="hub-settings">
-                <div class="settings-group">
-                    <h3><i class="fas fa-download"></i> Import / Export</h3>
-                    <div class="settings-buttons">
-                        <button type="button" data-action="import-patrols" class="hub-btn">
-                            <i class="fas fa-file-import"></i> Import Patrols
-                        </button>
-                        <button type="button" data-action="export-patrols" class="hub-btn">
-                            <i class="fas fa-file-export"></i> Export Patrols
-                        </button>
+        {{!-- TELEGRAPH TAB --}}
+        <section class="tab-panel" data-tab="telegraph" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/blood rain.jpg" alt="Telegraph System">
+                    <div class="image-overlay">
+                        <h2>Telegraph System</h2>
+                        <p>Visual effects for patrol spawns and alerts</p>
                     </div>
                 </div>
-                
-                <div class="settings-group">
-                    <h3><i class="fas fa-broom"></i> Scene Cleanup</h3>
-                    <p>Remove orphaned waypoint graphics from the canvas.</p>
-                    <div class="settings-buttons">
-                        <button type="button" data-action="clear-all-waypoints" class="hub-btn danger">
-                            <i class="fas fa-trash-alt"></i> Clear All Waypoint Graphics
-                        </button>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label><input type="checkbox" name="telegraphEnabled" {{#if telegraphEnabled}}checked{{/if}}> Enable Telegraph Effects</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Effect Style</label>
+                            <select name="telegraphStyle">
+                                <option value="ripple" {{#if (eq telegraphStyle "ripple")}}selected{{/if}}>Ripple</option>
+                                <option value="runes" {{#if (eq telegraphStyle "runes")}}selected{{/if}}>Runes</option>
+                                <option value="glow" {{#if (eq telegraphStyle "glow")}}selected{{/if}}>Glow</option>
+                                <option value="portal" {{#if (eq telegraphStyle "portal")}}selected{{/if}}>Portal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (ms)</label>
+                            <input type="number" name="telegraphDuration" value="{{telegraphDuration}}" min="500" max="5000" step="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Effect Color</label>
+                            <input type="color" name="telegraphColor" value="{{telegraphColor}}">
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="telegraphGMOnly" {{#if telegraphGMOnly}}checked{{/if}}> GM Only (Hide from players)</label>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" data-action="save-telegraph-settings" class="btn primary">Save Changes</button>
+                            <button type="button" data-action="test-telegraph" class="btn">Test Effect</button>
+                        </div>
                     </div>
-                    <p class="hint">Use this if waypoint markers remain on the canvas after deleting patrols.</p>
-                </div>
-                
-                <div class="settings-group">
-                    <h3><i class="fas fa-cog"></i> Module Settings</h3>
-                    <p>Configure module-wide settings in the Foundry settings menu.</p>
-                    <button type="button" class="hub-btn" onclick="game.settings.sheet.render(true)">
-                        <i class="fas fa-sliders-h"></i> Open Settings
-                    </button>
-                </div>
-
-                <div class="settings-group">
-                    <h3><i class="fas fa-info-circle"></i> About</h3>
-                    <p><strong>RNK Patrol</strong> v{{../version}}</p>
-                    <p>Advanced patrol system with teleporting guards</p>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    {{!-- Footer --}}
-    <footer class="hub-footer">
-        <div class="mode-legend">
-            <span><i class="fas fa-bolt"></i> Blink: {{stats.blink}}</span>
-            <span><i class="fas fa-walking"></i> Walk: {{stats.walk}}</span>
-            <span><i class="fas fa-random"></i> Hybrid: {{stats.hybrid}}</span>
-        </div>
-        <div class="scene-info">
-            <i class="fas fa-map"></i> {{scene.name}}
-        </div>
-    </footer>
+        {{!-- BARKS TAB --}}
+        <section class="tab-panel" data-tab="barks" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/last resort.jpg" alt="Bark System">
+                    <div class="image-overlay">
+                        <h2>Bark System</h2>
+                        <p>Audio cues for patrol events</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label><input type="checkbox" name="barksEnabled" {{#if barksEnabled}}checked{{/if}}> Enable Barks</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Volume</label>
+                            <input type="range" name="barkVolume" value="{{barkVolume}}" min="0" max="1" step="0.1">
+                            <span class="range-val">{{barkVolumePercent}}%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Cooldown (ms)</label>
+                            <input type="number" name="barkCooldown" value="{{barkCooldown}}" min="0" max="10000" step="500">
+                        </div>
+
+                        <h4>Custom Bark Paths</h4>
+                        {{#each barkCategories}}
+                        <div class="form-group bark-path">
+                            <label><i class="{{icon}}"></i> {{label}}</label>
+                            <input type="text" name="bark-{{key}}" value="{{path}}" placeholder="Path to audio file...">
+                            <button type="button" data-action="browse-bark" data-category="{{key}}" class="btn-sm"><i class="fas fa-folder"></i></button>
+                        </div>
+                        {{/each}}
+
+                        <div class="form-actions">
+                            <button type="button" data-action="save-bark-settings" class="btn primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{!-- AI TAB --}}
+        <section class="tab-panel" data-tab="ai" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/Vespera-red.jpg" alt="AI System">
+                    <div class="image-overlay">
+                        <h2>AI System</h2>
+                        <p>Automation and decision making</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>AI Provider</label>
+                            <select name="aiProvider">
+                                <option value="none" {{#if (eq aiProvider "none")}}selected{{/if}}>Disabled</option>
+                                <option value="system" {{#if (eq aiProvider "system")}}selected{{/if}}>System Heuristics</option>
+                                <option value="openai" {{#if (eq aiProvider "openai")}}selected{{/if}}>OpenAI</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="automateDecisions" {{#if automateDecisions}}checked{{/if}}> Automate Capture Decisions</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="automateCombat" {{#if automateCombat}}checked{{/if}}> Automate Combat</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="automateRequireApproval" {{#if automateRequireApproval}}checked{{/if}}> Require GM Approval</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Combat Automation Level</label>
+                            <select name="combatAutomationLevel">
+                                <option value="none" {{#if (eq combatAutomationLevel "none")}}selected{{/if}}>None</option>
+                                <option value="assisted" {{#if (eq combatAutomationLevel "assisted")}}selected{{/if}}>Assisted</option>
+                                <option value="autoResolve" {{#if (eq combatAutomationLevel "autoResolve")}}selected{{/if}}>Auto Resolve</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4>AI Log</h4>
+                    <div class="ai-log">
+                        {{#if aiLog.length}}
+                            {{#each aiLog}}
+                            <div class="log-entry">
+                                <span class="log-type">{{this.type}}</span>
+                                <span class="log-msg">{{this.message}}</span>
+                                {{#if this.undo}}
+                                <button data-action="undo-ai-log" data-index="{{@index}}" class="btn-sm"><i class="fas fa-undo"></i></button>
+                                {{/if}}
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="empty-state small">
+                                <p>No AI activity logged</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <h4>Pending Actions</h4>
+                    <div class="pending-list">
+                        {{#if aiPending.length}}
+                            {{#each aiPending}}
+                            <div class="pending-item">
+                                <span class="pending-desc">{{this.description}}</span>
+                                <div class="pending-actions">
+                                    <button data-action="approve-pending" data-index="{{@index}}" class="btn-sm success"><i class="fas fa-check"></i></button>
+                                    <button data-action="reject-pending" data-index="{{@index}}" class="btn-sm danger"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="empty-state small">
+                                <p>No pending actions</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" data-action="save-ai-settings" class="btn primary">Save Changes</button>
+                        <button type="button" data-action="clear-ai-log" class="btn danger">Clear Log</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{!-- ACTIVITY TAB --}}
+        <section class="tab-panel" data-tab="activity" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/1.jpg" alt="Activity Log">
+                    <div class="image-overlay">
+                        <h2>Activity Log</h2>
+                        <p>Recent patrol events and quick actions</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <h4>Quick Patrol (Scene Tokens)</h4>
+                    <div class="token-grid">
+                        {{#if sceneTokens.length}}
+                            {{#each sceneTokens}}
+                            <div class="token-item {{#if hasPatrol}}has-patrol{{/if}}" data-token-id="{{id}}">
+                                <img src="{{img}}" class="token-avatar" alt="{{name}}">
+                                <span class="token-name">{{name}}</span>
+                                {{#unless hasPatrol}}
+                                <button data-action="quick-patrol" data-token-id="{{id}}" class="btn-sm primary" title="Create Patrol"><i class="fas fa-plus"></i></button>
+                                {{/unless}}
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="empty-state small">
+                                <p>No tokens on current scene</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <h4>Recent Activity</h4>
+                    <div class="activity-log">
+                        {{#if activityLog.length}}
+                            {{#each activityLog}}
+                            <div class="activity-item {{type}}">
+                                <i class="fas {{icon}}"></i>
+                                <span class="activity-msg">{{message}}</span>
+                                <span class="activity-time">{{time}}</span>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <div class="empty-state small">
+                                <p>No recent activity</p>
+                            </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" data-action="refresh" class="btn"><i class="fas fa-sync"></i> Refresh</button>
+                        <button type="button" data-action="clear-activity" class="btn danger">Clear Log</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{!-- SETTINGS TAB --}}
+        <section class="tab-panel" data-tab="settings" data-group="hub-tabs">
+            <div class="panel-split">
+                <div class="panel-image">
+                    <img src="modules/rnk-patrol/assets/pics/rachel.jpg" alt="Settings">
+                    <div class="image-overlay">
+                        <h2>Module Settings</h2>
+                        <p>Global configuration options</p>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-form">
+                        <h4>MidiQOL Integration</h4>
+                        <div class="form-group">
+                            <label>Logging Level</label>
+                            <select name="midiQolLoggingLevel">
+                                <option value="none" {{#if (eq midiQolLoggingLevel "none")}}selected{{/if}}>None</option>
+                                <option value="minimal" {{#if (eq midiQolLoggingLevel "minimal")}}selected{{/if}}>Minimal</option>
+                                <option value="verbose" {{#if (eq midiQolLoggingLevel "verbose")}}selected{{/if}}>Verbose</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="autoResolveAffectsPlayers" {{#if autoResolveAffectsPlayers}}checked{{/if}}> Auto-Resolve Can Affect Players</label>
+                            <small class="hint">Warning: Use with caution</small>
+                        </div>
+
+                        <h4>Import / Export</h4>
+                        <div class="form-actions row">
+                            <button type="button" data-action="export-patrols" class="btn"><i class="fas fa-download"></i> Export Patrols</button>
+                            <button type="button" data-action="import-patrols" class="btn"><i class="fas fa-upload"></i> Import Patrols</button>
+                        </div>
+
+                        <h4>Diagnostics</h4>
+                        <div class="adapters-info">
+                            <p><strong>System:</strong> {{scene.name}}</p>
+                            <p><strong>Adapters:</strong></p>
+                            {{#each adapters}}
+                            <div class="adapter-item">
+                                <span>{{systemId}}</span> - {{name}}
+                            </div>
+                            {{/each}}
+                        </div>
+
+                        <h4>Debug Tests</h4>
+                        <div class="tests-grid">
+                            {{#each tests}}
+                            <button type="button" data-action="run-test" data-test="{{id}}" class="btn test-btn" title="{{desc}}">
+                                {{name}}
+                            </button>
+                            {{/each}}
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" data-action="save-settings" class="btn primary">Save All Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>

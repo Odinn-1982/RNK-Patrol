@@ -18,6 +18,28 @@
 }
 
 /* ==========================================
+   GLOBAL INPUT OVERRIDES FOR READABILITY
+   ========================================== */
+.rnk-patrol input[type="text"],
+.rnk-patrol input[type="number"],
+.rnk-patrol select,
+.rnk-patrol textarea {
+    background: rgba(10, 10, 20, 0.95) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.rnk-patrol input::placeholder,
+.rnk-patrol textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.rnk-patrol select option {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================
    HOTBAR SLOT 5 - GM HUB BUTTON
    ========================================== */
 
@@ -229,11 +251,27 @@
 .patrol-config input,
 .patrol-config select {
     width: 100%;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    background: rgba(20, 20, 35, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 4px;
-    color: #fff;
+    color: #ffffff !important;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Placeholder text styling */
+.patrol-creator input::placeholder,
+.patrol-config input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.patrol-creator select option,
+.patrol-config select option {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+    font-size: 14px;
+    padding: 8px;
 }
 
 .patrol-creator input:focus,
@@ -919,3 +957,110 @@ body.rnk-patrol-placing #board * {
 .rnk-patrol-capture-dialog .surrender-btn:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* ==========================================
+   Reinforcement Alert Popup
+   ========================================== */
+
+.rnk-patrol-dialog.alert-popup .window-content {
+    background: linear-gradient(180deg, #1a0a0a 0%, #2a1515 100%);
+    border: 2px solid #ff4444;
+}
+
+.rnk-patrol-dialog.alert-popup h2 {
+    color: #ff4444;
+    text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+    animation: alertPulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes alertPulse {
+    from { text-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+    to { text-shadow: 0 0 20px rgba(255, 68, 68, 0.8); }
+}
+
+.rnk-alert-popup .reinforcement-warning {
+    background: rgba(255, 68, 68, 0.2);
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid #ff4444;
+}
+
+/* ==========================================
+   Bleed-Out Save Dialog
+   ========================================== */
+
+.rnk-patrol-dialog.bleedout-dialog .window-content {
+    background: linear-gradient(180deg, #1a0505 0%, #2a0a0a 100%);
+    border: 2px solid #cc0000;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .save-info {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .disadvantage {
+    color: #ff6666;
+    font-weight: bold;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcomes {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcome {
+    flex: 1;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcome.success {
+    background: rgba(34, 139, 34, 0.3);
+    border: 1px solid #228b22;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcome.failure {
+    background: rgba(139, 0, 0, 0.3);
+    border: 1px solid #8b0000;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcome.surrender {
+    background: rgba(255, 215, 0, 0.2);
+    border: 1px solid #daa520;
+}
+
+.rnk-patrol-dialog.bleedout-dialog .outcome.fight {
+    background: rgba(70, 130, 180, 0.3);
+    border: 1px solid #4682b4;
+}
+
+/* ==========================================
+   Bleed-Out Result Dialog
+   ========================================== */
+
+.rnk-patrol-dialog.bleedout-result .window-content {
+    padding: 0;
+}
+
+.rnk-patrol-dialog.bleedout-result h2 {
+    margin: 0;
+    padding: 10px 0;
+}
+
+/* Heartbeat animation for bleeding icon */
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.15); }
+}
+
+.rnk-bleedout-dialog .fa-heartbeat {
+    animation: heartbeat 1s ease-in-out infinite;
+}
+

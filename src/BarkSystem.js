@@ -305,16 +305,24 @@ export class BarkSystem {
      * Get default sound path for bark type
      */
     _getDefaultSoundPath(type) {
-        // Module's built-in sounds
-        const basePath = `modules/${MODULE_ID}/sounds/barks/`
+        // Module's built-in sounds - use actual .wav files in assets/audio/barks/
+        const basePath = `modules/${MODULE_ID}/assets/audio/barks/`
         
+        // Map bark types to actual available sound files
         const sounds = {
-            [BARK_TYPES.SPAWN]: `${basePath}patrol.mp3`,
-            [BARK_TYPES.DESPAWN]: `${basePath}moving.mp3`,
-            [BARK_TYPES.CAPTURE]: `${basePath}capture.mp3`,
-            [BARK_TYPES.DISREGARD]: `${basePath}disregard.mp3`,
-            [BARK_TYPES.THEFT]: `${basePath}theft.mp3`,
-            [BARK_TYPES.ALERT]: `${basePath}alert.mp3`
+            [BARK_TYPES.SPAWN]: `${basePath}09. Who Goes There_.wav`,
+            [BARK_TYPES.DESPAWN]: `${basePath}11. Move Along.wav`,
+            [BARK_TYPES.CAPTURE]: `${basePath}04. You're In Serious Trouble Now.wav`,
+            [BARK_TYPES.DISREGARD]: `${basePath}06. Ask You to Leave.wav`,
+            [BARK_TYPES.THEFT]: `${basePath}19. You're Trespassing on Private Property.wav`,
+            [BARK_TYPES.THEFT_RELEASE]: `${basePath}26. Get Out of Here.wav`,
+            [BARK_TYPES.BRIBERY_ACCEPT]: `${basePath}11. Move Along.wav`,
+            [BARK_TYPES.BRIBERY_GENEROUS]: `${basePath}20. Walk Away.wav`,
+            [BARK_TYPES.BRIBERY_BETRAYAL]: `${basePath}04. You're In Serious Trouble Now.wav`,
+            [BARK_TYPES.BLINDFOLD_RELEASE]: `${basePath}26. Get Out of Here.wav`,
+            [BARK_TYPES.ALERT]: `${basePath}10. Intruder.wav`,
+            [BARK_TYPES.INVESTIGATE]: `${basePath}37. What Are You Doing_.wav`,
+            [BARK_TYPES.ALL_CLEAR]: `${basePath}11. Move Along.wav`
         }
         
         return sounds[type] || null

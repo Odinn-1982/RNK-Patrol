@@ -102,6 +102,20 @@ export class PatrolManagerApp extends Application {
         // Refresh
         html.find('[data-action="refresh"]').click(() => this.render())
     }
+
+    /** @override */
+    async render(force = false, options = {}) {
+        // Preserve scroll position in the patrol list across re-renders
+        const list = this.element?.find('.patrol-list')[0];
+        const scrollTop = list ? list.scrollTop : 0;
+
+        await super.render(force, options);
+
+        const newList = this.element?.find('.patrol-list')[0];
+        if (newList) newList.scrollTop = scrollTop;
+
+        return this;
+    }
     
     // ==========================================
     // Event Handlers

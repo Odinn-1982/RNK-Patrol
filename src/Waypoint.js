@@ -247,11 +247,14 @@ export class Waypoint {
     }
     
     /**
-     * Get effective color
+     * Get effective color - uses patrol color if available
      * @returns {string}
      */
     get effectiveColor() {
-        return this.color || getSetting('waypointColor', '#7B68EE')
+        // Priority: waypoint color > patrol color > setting default
+        if (this.color) return this.color
+        if (this._patrol?.color) return this._patrol.color
+        return getSetting('waypointColor', '#7B68EE')
     }
     
     // ==========================================
@@ -432,16 +435,18 @@ export class Waypoint {
         this._visual.eventMode = 'static'
         this._visual.cursor = 'pointer'
         
-        // Background circle
+        // Detection range circle - drawn first so it's behind everything
+        // Make it non-interactive so clicks pass through to tokens below
+        const range = new PIXI.Graphics()
+        range.alpha = 0.15
+        range.eventMode = 'none'  // Click-through - doesn't block mouse events
+        this._visual.addChild(range)
+        this._visual.range = range
+        
+        // Background circle (the waypoint marker itself)
         const bg = new PIXI.Graphics()
         this._visual.addChild(bg)
         this._visual.bg = bg
-        
-        // Detection range circle
-        const range = new PIXI.Graphics()
-        range.alpha = 0.15
-        this._visual.addChild(range)
-        this._visual.range = range
         
         // Vision cone (if not 360)
         const cone = new PIXI.Graphics()
@@ -463,14 +468,15 @@ export class Waypoint {
         // Label
         const label = new PIXI.Text(this.name, {
             fontFamily: 'Arial',
-            fontSize: 12,
+            fontSize: 14,
+            fontWeight: 'bold',
             fill: 0xFFFFFF,
             stroke: 0x000000,
-            strokeThickness: 2,
+            strokeThickness: 3,
             align: 'center'
         })
         label.anchor.set(0.5, 0)
-        label.y = 20
+        label.y = 25
         this._visual.addChild(label)
         this._visual.label = label
         
@@ -478,13 +484,98 @@ export class Waypoint {
         this._visual.x = this.x
         this._visual.y = this.y
         
-        // Add to canvas
-        canvas.controls.addChild(this._visual)
+        // Add to canvas below tokens
+        // Use the grid layer which is below tokens, or create our own container on interface
+        // The key is to ensure waypoints don't block token selection
+        const waypointLayer = this._getOrCreateWaypointLayer()
+        if (waypointLayer) {
+            waypointLayer.addChild(this._visual)
+        } else {
+            // Fallback to controls but set very low zIndex
+            this._visual.zIndex = -1000
+            canvas.controls.addChild(this._visual)
+            canvas.controls.sortChildren()
+        }
         
-        // Interaction
-        this._visual.on('pointerdown', () => this._onPointerDown())
-        this._visual.on('pointerover', () => this._onPointerOver())
-        this._visual.on('pointerout', () => this._onPointerOut())
+        // Interaction - only on the bg marker, not the range circle
+        this._visual.bg.eventMode = 'static'
+        this._visual.bg.cursor = 'pointer'
+        this._visual.bg.on('pointerdown', () => this._onPointerDown())
+        this._visual.bg.on('pointerover', () => this._onPointerOver())
+        this._visual.bg.on('pointerout', () => this._onPointerOut())
+        
+        // Fade the detection zone after a delay for cleaner visuals
+        this._fadeDetectionZone()
+    }
+    
+    /**
+     * Get or create a dedicated layer for waypoints below tokens
+     */
+    _getOrCreateWaypointLayer() {
+        // Check if we already have a waypoint layer
+        if (canvas.stage?.rnkPatrolWaypoints) {
+            return canvas.stage.rnkPatrolWaypoints
+        }
+
+        if (!canvas.stage) return null
+
+        const container = new PIXI.Container()
+        container.name = 'rnk-patrol-waypoints'
+        container.sortableChildren = true
+
+        const tokenParent = canvas.tokens?.parent || canvas.stage
+        const parentChildren = tokenParent?.children || []
+        const tokenIndex = parentChildren.indexOf(canvas.tokens)
+
+        if (tokenParent && tokenIndex > -1) {
+            tokenParent.addChildAt(container, tokenIndex)
+        } else if (canvas.interface) {
+            const interfaceIndex = canvas.stage.children.indexOf(canvas.interface)
+            if (interfaceIndex > 0) {
+                canvas.stage.addChildAt(container, interfaceIndex)
+            } else {
+                canvas.stage.addChildAt(container, 0)
+            }
+        } else {
+            canvas.stage.addChildAt(container, 0)
+        }
+
+        canvas.stage.rnkPatrolWaypoints = container
+        return container
+    }
+    
+    /**
+     * Fade the detection zone to a subtle opacity after placement
+     */
+    _fadeDetectionZone() {
+        if (!this._visual?.range) return
+        
+        // Start at visible opacity, then fade to subtle
+        const initialAlpha = 0.4
+        const finalAlpha = 0.15
+        const fadeDelay = 3000  // ms before starting fade
+        const fadeDuration = 1500  // ms for fade animation
+        
+        this._visual.range.alpha = initialAlpha
+        
+        setTimeout(() => {
+            if (!this._visual?.range) return
+            
+            const startTime = performance.now()
+            const animate = () => {
+                if (!this._visual?.range) return
+                
+                const elapsed = performance.now() - startTime
+                const progress = Math.min(elapsed / fadeDuration, 1)
+                
+                this._visual.range.alpha = initialAlpha - (initialAlpha - finalAlpha) * progress
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate)
+                }
+            }
+            requestAnimationFrame(animate)
+        }, fadeDelay)
     }
     
     /**
@@ -494,13 +585,17 @@ export class Waypoint {
         if (!this._visual) return
         
         const color = PIXI.Color.shared.setValue(this.effectiveColor).toNumber()
-        const radius = 15
+        const radius = 18
         
-        // Update background
+        // Update background marker with border for better visibility
         this._visual.bg.clear()
-        this._visual.bg.beginFill(color, this.disabled ? 0.3 : 0.8)
+        this._visual.bg.lineStyle(3, 0xFFFFFF, 0.9)
+        this._visual.bg.beginFill(color, this.disabled ? 0.4 : 0.9)
         this._visual.bg.drawCircle(0, 0, radius)
         this._visual.bg.endFill()
+        
+        // Set hit area to just the marker circle, not the range
+        this._visual.bg.hitArea = new PIXI.Circle(0, 0, radius)
         
         // Occupied indicator
         if (this.isOccupied) {
@@ -508,12 +603,16 @@ export class Waypoint {
             this._visual.bg.drawCircle(0, 0, radius + 2)
         }
         
-        // Detection range
+        // Detection range - use outline instead of fill for less visual clutter
         this._visual.range.clear()
         if (this.detectionRange > 0 && game.user.isGM) {
-            this._visual.range.beginFill(color, 1)
+            // Draw as semi-transparent fill with colored border
+            this._visual.range.lineStyle(3, color, 0.8)
+            this._visual.range.beginFill(color, 0.15)
             this._visual.range.drawCircle(0, 0, this.detectionRadiusPixels)
             this._visual.range.endFill()
+            // Ensure it stays non-interactive
+            this._visual.range.eventMode = 'none'
         }
         
         // Vision cone

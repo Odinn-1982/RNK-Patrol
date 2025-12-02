@@ -65,6 +65,16 @@
             </div>
 
             <div class="form-group">
+                <label for="guardActorId">Guard Actor (override)</label>
+                <select name="guardActorId">
+                    <option value="">-- Use Random/Template --</option>
+                    {{#each actors}}
+                    <option value="{{id}}" {{#if (eq patrol.guardActorId id)}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label for="mode">{{localize "rnk-patrol.fields.mode"}}</label>
                 <select name="mode">
                     {{#each modes}}
@@ -97,6 +107,16 @@
             </div>
 
             <div class="form-group">
+                <label for="aggressiveness">Aggressiveness</label>
+                <select name="aggressiveness">
+                    <option value="conservative" {{#if (eq patrol.aggressiveness 'conservative')}}selected{{/if}}>Conservative</option>
+                    <option value="normal" {{#if (eq patrol.aggressiveness 'normal')}}selected{{/if}}>Normal</option>
+                    <option value="aggressive" {{#if (eq patrol.aggressiveness 'aggressive')}}selected{{/if}}>Aggressive</option>
+                </select>
+                <span class="hint">Controls how risk-averse the patrol is about combat vs bribery/theft</span>
+            </div>
+
+            <div class="form-group">
                 <label>
                     <input type="checkbox" name="disabled" {{#if patrol.disabled}}checked{{/if}}>
                     {{localize "rnk-patrol.fields.disabled"}}
@@ -106,6 +126,27 @@
             <div class="form-group">
                 <label for="notes">{{localize "rnk-patrol.fields.notes"}}</label>
                 <textarea name="notes" rows="3">{{patrol.notes}}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="automateCombat" {{#if (eq patrol.automateCombat true)}}checked{{/if}}>
+                    Automate Combat for this Patrol (Inherit from global if unchecked)
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="automateDecisions" {{#if (eq patrol.automateDecisions true)}}checked{{/if}}>
+                    Automate Bribe/Capture Decisions for this Patrol (Inherit from global if unchecked)
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="automateRequireApproval">Require GM Approval for AI Actions</label>
+                <select name="automateRequireApproval">
+                    <option value="inherit" {{#if (eq patrol.automateRequireApproval null)}}selected{{/if}}>Inherit</option>
+                    <option value="enabled" {{#if (eq patrol.automateRequireApproval true)}}selected{{/if}}>Enabled</option>
+                    <option value="disabled" {{#if (eq patrol.automateRequireApproval false)}}selected{{/if}}>Disabled</option>
+                </select>
             </div>
         </div>
 

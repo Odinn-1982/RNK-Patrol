@@ -7,7 +7,7 @@
  * @module PatrolEffects
  */
 
-import { MODULE_ID, debug } from './main.js'
+import { MODULE_ID, debug, emitSocket, isPrimaryGM } from './main.js'
 import { getSetting } from './settings.js'
 
 /**
@@ -41,8 +41,9 @@ export class PatrolEffects {
     /**
      * Play appear effect
      * @param {Object} options
+     * @param {boolean} broadcast - Whether to broadcast to other clients (default true for GM)
      */
-    static async playAppearEffect(options) {
+    static async playAppearEffect(options, broadcast = true) {
         const { x, y, effectType, color, tokenId } = options
         
         if (!getSetting('enableEffects', true) || !canvas.ready) return
@@ -50,6 +51,11 @@ export class PatrolEffects {
         const type = effectType || getSetting('defaultEffectType', 'fade')
         
         debug(`Playing appear effect: ${type} at (${x}, ${y})`)
+        
+        // Broadcast to other clients if we're the GM
+        if (broadcast && isPrimaryGM()) {
+            emitSocket('playAppearEffect', { x, y, effectType: type, color, tokenId })
+        }
         
         switch (type) {
             case this.EFFECT_TYPES.FADE:
@@ -82,8 +88,9 @@ export class PatrolEffects {
     /**
      * Play disappear effect
      * @param {Object} options
+     * @param {boolean} broadcast - Whether to broadcast to other clients (default true for GM)
      */
-    static async playDisappearEffect(options) {
+    static async playDisappearEffect(options, broadcast = true) {
         const { x, y, effectType, color, tokenId } = options
         
         if (!getSetting('enableEffects', true) || !canvas.ready) return
@@ -91,6 +98,11 @@ export class PatrolEffects {
         const type = effectType || getSetting('defaultEffectType', 'fade')
         
         debug(`Playing disappear effect: ${type} at (${x}, ${y})`)
+        
+        // Broadcast to other clients if we're the GM
+        if (broadcast && isPrimaryGM()) {
+            emitSocket('playDisappearEffect', { x, y, effectType: type, color, tokenId })
+        }
         
         switch (type) {
             case this.EFFECT_TYPES.FADE:
@@ -156,6 +168,8 @@ export class PatrolEffects {
                 if (progress < 1) {
                     requestAnimationFrame(animate)
                 } else {
+                    // Ensure token is fully visible at end
+                    token.mesh.alpha = 1
                     resolve()
                 }
             }

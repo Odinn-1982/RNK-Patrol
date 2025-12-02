@@ -152,6 +152,51 @@ export class PatrolManager {
             const patrol = Patrol.fromData(data)
             patrol._manager = this
             this._patrols.set(patrol.id, patrol)
+
+            // If guard source is actors and patrol has no token assigned, auto-create a token
+            try {
+                const guardSource = getSetting('guardSource')
+                if (!patrol.tokenId && guardSource === 'actors' && isPrimaryGM()) {
+                    const jailSystem = game.rnkPatrol?.jailSystem
+                    const actor = patrol.guardActorId ? game.actors.get(patrol.guardActorId) : jailSystem?.getRandomNpcActor(sceneId)
+                    if (actor && canvas.scene) {
+                        const targetLevel = patrol._lastTargetLevel || 5
+                        const actorData = jailSystem._scaleActorData(actor.toObject(), targetLevel)
+                        // Determine spawn position using first waypoint or center of canvas
+                        let x = canvas.grid?.center?.x || 100
+                        let y = canvas.grid?.center?.y || 100
+                        const firstWp = patrol.getWaypoint?.(patrol.waypointIds?.[0])
+                        if (firstWp) {
+                            x = firstWp.x
+                            y = firstWp.y
+                        }
+                        const tokenData = {
+                            name: actor.name,
+                            x,
+                            y,
+                            width: 1,
+                            height: 1,
+                            disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE,
+                            actorData,
+                            actorLink: false,
+                            flags: {
+                                [MODULE_ID]: {
+                                    isPatrolToken: true,
+                                    sourcePatrolId: patrol.id,
+                                    guardActorId: actor.id
+                                }
+                            }
+                        }
+                        const [created] = await canvas.scene.createEmbeddedDocuments('Token', [tokenData])
+                        if (created) {
+                            patrol.tokenId = created.id
+                            await patrol.save()
+                        }
+                    }
+                }
+            } catch (err) {
+                // Non-fatal
+            }
         }
         
         debug(`Loaded ${this._patrols.size} patrols`)

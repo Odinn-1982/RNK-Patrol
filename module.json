@@ -2,7 +2,7 @@
     "id": "rnk-patrol",
     "title": "RNK Patrol",
     "description": "Advanced patrol system with teleporting waypoints. Guards appear, scan, and vanish to reappear at another waypoint - creating unpredictable, supernatural patrol patterns. Also supports traditional walking patrols for those who prefer classic movement.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "compatibility": {
         "minimum": 12,
         "verified": "13.346"
