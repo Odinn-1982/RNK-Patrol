@@ -27,9 +27,9 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "",
-    "manifest": "",
-    "download": "",
+    "url": "https://github.com/Odinn-1982/RNK-Patrol",
+    "manifest": "https://raw.githubusercontent.com/Odinn-1982/RNK-Patrol/master/module.json",
+    "download": "https://github.com/Odinn-1982/RNK-Patrol/archive/refs/heads/master.zip",
     "license": "MIT",
     "readme": "README.md",
     "bugs": "",
