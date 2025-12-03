@@ -563,6 +563,41 @@
     color: var(--cyan);
 }
 
+.weight-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 4px;
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+.weight-total.error {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+}
+
+.weight-total .total-value {
+    font-weight: 700;
+}
+
+.weight-total .reset-weights {
+    background: transparent;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.weight-total .reset-weights:hover {
+    background: var(--cyan);
+    color: var(--bg);
+}
+
 /* ============================================
    JAIL & PRISONER LISTS
    ============================================ */

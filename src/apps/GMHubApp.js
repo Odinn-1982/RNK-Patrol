@@ -68,9 +68,16 @@ export class GMHubApp extends Application {
         // Get capture system settings
         const captureEnabled = getSetting('captureEnabled', true);
         const captureRange = getSetting('captureRange', 2);
-        const outcomeWeights = getSetting('captureOutcomeWeights', {
+        let outcomeWeights = getSetting('captureOutcomeWeights', {
             combat: 30, theft: 25, relocate: 20, disregard: 15, jail: 10
         });
+        // Validate outcome weights total - if not 100%, reset to defaults
+        const weightsTotal = Object.values(outcomeWeights).reduce((a, b) => a + b, 0);
+        if (weightsTotal !== 100) {
+            console.warn(`rnk-patrol | Outcome weights total ${weightsTotal}%, resetting to defaults`);
+            outcomeWeights = { combat: 30, theft: 25, relocate: 20, disregard: 15, jail: 10 };
+        }
+        const outcomeWeightsTotal = Object.values(outcomeWeights).reduce((a, b) => a + b, 0);
         const briberyEnabled = getSetting('briberyEnabled', true);
         const briberyBaseCost = getSetting('briberyBaseCost', 50);
         const briberyChance = getSetting('briberyChance', 70);
@@ -165,6 +172,7 @@ export class GMHubApp extends Application {
             captureEnabled,
             captureRange,
             outcomeWeights,
+            outcomeWeightsTotal,
             briberyEnabled,
             briberyBaseCost,
             briberyChance,
@@ -523,7 +531,24 @@ export class GMHubApp extends Application {
         html.find('[data-action="save-capture-settings"]').click(() => this._saveCaptureSettings(html));
         
         // Update weight total on change
-        html.find('[name^="weight-"]').on('input', () => this._updateWeightTotal(html));
+        html.find('[name^="weight-"]').on('input', (ev) => {
+            // Update the individual range value display
+            $(ev.currentTarget).siblings('.range-val').text(ev.currentTarget.value);
+            this._updateWeightTotal(html);
+        });
+        
+        // Reset weights button
+        html.find('.reset-weights').click(() => {
+            html.find('[name="weight-combat"]').val(30).siblings('.range-val').text('30');
+            html.find('[name="weight-theft"]').val(25).siblings('.range-val').text('25');
+            html.find('[name="weight-relocate"]').val(20).siblings('.range-val').text('20');
+            html.find('[name="weight-disregard"]').val(15).siblings('.range-val').text('15');
+            html.find('[name="weight-jail"]').val(10).siblings('.range-val').text('10');
+            this._updateWeightTotal(html);
+        });
+        
+        // Initialize weight total display
+        this._updateWeightTotal(html);
         
         // Range slider value display
         html.find('input[type="range"]').on('input', (ev) => {

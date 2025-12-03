@@ -232,6 +232,10 @@
                                 <input type="range" name="weight-disregard" value="{{outcomeWeights.disregard}}" min="0" max="100">
                                 <span class="range-val">{{outcomeWeights.disregard}}</span>
                             </div>
+                            <div class="weight-total">
+                                <span>Total: <span class="total-value">{{outcomeWeightsTotal}}</span>%</span>
+                                <button type="button" class="reset-weights" title="Reset to defaults"><i class="fas fa-undo"></i></button>
+                            </div>
                         </div>
 
                         <h4>Bleed-Out Settings</h4>
