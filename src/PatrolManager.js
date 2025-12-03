@@ -233,6 +233,151 @@ export class PatrolManager {
         }
     }
     
+    // ==========================================
+    // Scene State Save/Restore
+    // ==========================================
+    
+    /**
+     * Save the current runtime state of all patrols in a scene
+     * This captures token positions, active states, etc.
+     * @param {string} sceneId 
+     */
+    async saveSceneState(sceneId) {
+        if (!sceneId) return
+        
+        const stateData = {
+            timestamp: Date.now(),
+            sceneName: game.scenes.get(sceneId)?.name || sceneId,
+            patrols: []
+        }
+        
+        // Capture each patrol's runtime state
+        for (const patrol of this._patrols.values()) {
+            if (patrol.sceneId !== sceneId) continue
+            
+            const token = patrol.token
+            const patrolState = {
+                id: patrol.id,
+                name: patrol.name,
+                wasActive: patrol.isActive,
+                state: patrol.state,
+                currentWaypointIndex: patrol.currentWaypointIndex,
+                tokenPosition: token ? { x: token.x, y: token.y } : null,
+                tokenHidden: token?.document?.hidden ?? false,
+                alertLevel: patrol.alertLevel
+            }
+            stateData.patrols.push(patrolState)
+        }
+        
+        // Store in memory (session-based, not persisted)
+        if (!this._savedSceneStates) {
+            this._savedSceneStates = new Map()
+        }
+        this._savedSceneStates.set(sceneId, stateData)
+        
+        debug(`Saved scene state for ${stateData.sceneName}: ${stateData.patrols.length} patrols`)
+    }
+    
+    /**
+     * Get saved state for a scene
+     * @param {string} sceneId 
+     * @returns {Object|null}
+     */
+    getSavedSceneState(sceneId) {
+        if (!this._savedSceneStates) return null
+        return this._savedSceneStates.get(sceneId) || null
+    }
+    
+    /**
+     * Clear saved state for a scene
+     * @param {string} sceneId 
+     */
+    clearSavedSceneState(sceneId) {
+        if (this._savedSceneStates) {
+            this._savedSceneStates.delete(sceneId)
+        }
+    }
+    
+    /**
+     * Prompt the user to restore saved scene state
+     * @param {Object} savedState 
+     */
+    async promptRestoreState(savedState) {
+        if (!savedState || !savedState.patrols.length) return
+        
+        const activeCount = savedState.patrols.filter(p => p.wasActive).length
+        const timeSince = Math.round((Date.now() - savedState.timestamp) / 1000 / 60)
+        const timeStr = timeSince < 1 ? 'less than a minute' : `${timeSince} minute${timeSince !== 1 ? 's' : ''}`
+        
+        const content = `
+            <p>You left <strong>${savedState.sceneName}</strong> ${timeStr} ago with ${savedState.patrols.length} patrol(s).</p>
+            <p><strong>${activeCount}</strong> patrol(s) were active when you left.</p>
+            <p>Would you like to restore the previous patrol state?</p>
+            <ul style="font-size: 0.9em; color: #888;">
+                <li><strong>Restore:</strong> Patrols resume from where they were</li>
+                <li><strong>Fresh Start:</strong> Patrols start from their first waypoint</li>
+            </ul>
+        `
+        
+        const result = await Dialog.confirm({
+            title: 'Restore Patrol State?',
+            content,
+            yes: () => true,
+            no: () => false,
+            defaultYes: true
+        })
+        
+        if (result) {
+            await this.restoreSceneState(savedState)
+            ui.notifications.info(`Restored patrol state for ${savedState.sceneName}`)
+        } else {
+            ui.notifications.info('Starting patrols fresh')
+        }
+        
+        // Clear the saved state either way
+        this.clearSavedSceneState(canvas.scene.id)
+    }
+    
+    /**
+     * Restore saved scene state
+     * @param {Object} savedState 
+     */
+    async restoreSceneState(savedState) {
+        if (!savedState || !savedState.patrols) return
+        
+        for (const patrolState of savedState.patrols) {
+            const patrol = this._patrols.get(patrolState.id)
+            if (!patrol) continue
+            
+            // Restore waypoint index
+            if (typeof patrolState.currentWaypointIndex === 'number') {
+                patrol.currentWaypointIndex = patrolState.currentWaypointIndex
+            }
+            
+            // Restore alert level
+            if (typeof patrolState.alertLevel === 'number') {
+                patrol.alertLevel = patrolState.alertLevel
+            }
+            
+            // Restore token position if available
+            const token = patrol.token
+            if (token && patrolState.tokenPosition) {
+                await token.document.update({
+                    x: patrolState.tokenPosition.x,
+                    y: patrolState.tokenPosition.y,
+                    hidden: patrolState.tokenHidden
+                })
+            }
+            
+            // Restart if it was active
+            if (patrolState.wasActive && !patrol.isActive) {
+                await patrol.start()
+            }
+        }
+        
+        debug('Restored scene state:', savedState.patrols.length, 'patrols')
+    }
+    
     /**
      * Cleanup - stop all patrols and clear state
      */

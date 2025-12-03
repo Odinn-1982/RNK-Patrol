@@ -328,6 +328,27 @@ Hooks.once('ready', async () => {
 })
 
 /**
+ * Save scene patrol state before leaving
+ * This captures runtime state like token positions and active status
+ */
+Hooks.on('preUpdateScene', async (scene, changes) => {
+    // Only care about navigation changes (switching to another scene)
+    if (!changes.active) return
+    if (!game.user.isGM || !game.rnkPatrol?.manager) return
+    
+    const currentSceneId = canvas.scene?.id
+    if (!currentSceneId || currentSceneId === scene.id) return
+    
+    debug('Saving scene state before leaving:', canvas.scene?.name)
+    
+    try {
+        await game.rnkPatrol.manager.saveSceneState(currentSceneId)
+    } catch (err) {
+        error('Failed to save scene state:', err)
+    }
+})
+
+/**
  * Canvas ready - reload patrols and waypoints for the current scene
  * This hook fires when the canvas is ready (initial load or scene switch)
  */
@@ -338,6 +359,14 @@ Hooks.on('canvasReady', async () => {
     
     try {
         await game.rnkPatrol.manager.loadScenePatrols(canvas.scene.id)
+        
+        // Check if we have saved state to restore
+        if (game.user.isGM) {
+            const savedState = game.rnkPatrol.manager.getSavedSceneState(canvas.scene.id)
+            if (savedState) {
+                await game.rnkPatrol.manager.promptRestoreState(savedState)
+            }
+        }
     } catch (err) {
         error('Failed to load patrols on canvas ready:', err)
     }
