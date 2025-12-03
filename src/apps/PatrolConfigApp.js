@@ -248,6 +248,55 @@ export class PatrolConfigApp extends FormApplication {
             const waypointId = event.currentTarget.dataset.waypointId
             await this._onPanToWaypoint(waypointId)
         })
+        
+        // Select all waypoints
+        html.find('[data-action="select-all-waypoints"]').click(() => {
+            html.find('[name="waypoints"]').prop('checked', true)
+        })
+        
+        // Deselect all waypoints
+        html.find('[data-action="deselect-all-waypoints"]').click(() => {
+            html.find('[name="waypoints"]').prop('checked', false)
+        })
+        
+        // Delete selected waypoints
+        html.find('[data-action="delete-selected-waypoints"]').click(async () => {
+            await this._onDeleteSelectedWaypoints(html)
+        })
+    }
+    
+    /**
+     * Delete all selected waypoints
+     */
+    async _onDeleteSelectedWaypoints(html) {
+        const selectedIds = []
+        html.find('[name="waypoints"]:checked').each((i, el) => {
+            selectedIds.push(el.value)
+        })
+        
+        if (selectedIds.length === 0) {
+            ui.notifications.warn('No waypoints selected.')
+            return
+        }
+        
+        const confirmed = await Dialog.confirm({
+            title: 'Delete Waypoints',
+            content: `<p>Are you sure you want to delete ${selectedIds.length} waypoint(s)?</p><p>This will remove them from all patrols.</p>`
+        })
+        
+        if (!confirmed) return
+        
+        // Delete each waypoint
+        for (const waypointId of selectedIds) {
+            await this.manager.deleteWaypoint(waypointId)
+        }
+        
+        // Remove from this patrol's list
+        this.patrol.waypointIds = this.patrol.waypointIds.filter(id => !selectedIds.includes(id))
+        await this.patrol.save()
+        
+        ui.notifications.info(`Deleted ${selectedIds.length} waypoint(s).`)
+        this.render()
     }
     
     /**

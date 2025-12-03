@@ -48,7 +48,7 @@
     {{!-- Tab Content --}}
     <section class="content">
         {{!-- General Tab --}}
-        <div class="tab-content active" data-tab="general" data-group="primary">
+        <div class="tab active" data-tab="general" data-group="primary">
             <div class="form-group">
                 <label for="name">{{localize "rnk-patrol.fields.name"}}</label>
                 <input type="text" name="name" value="{{patrol.name}}">
@@ -157,18 +157,29 @@
         </div>
 
         {{!-- Waypoints Tab --}}
-        <div class="tab-content" data-tab="waypoints" data-group="primary">
+        <div class="tab" data-tab="waypoints" data-group="primary">
             <p style="font-size: 0.85em; color: #888; margin-bottom: 10px;">
                 {{localize "rnk-patrol.apps.config.waypointHelp"}}
             </p>
             
             {{!-- Add Waypoint Button --}}
-            <div class="waypoint-actions" style="margin-bottom: 10px; display: flex; gap: 8px;">
-                <button type="button" data-action="add-waypoint" class="secondary" style="flex: 1;">
-                    <i class="fas fa-plus"></i> Add New Waypoint
+            <div class="waypoint-actions" style="margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" data-action="add-waypoint" class="secondary" style="flex: 1; min-width: 120px;">
+                    <i class="fas fa-plus"></i> Add New
                 </button>
-                <button type="button" data-action="add-existing-waypoint" class="secondary" style="flex: 1;">
+                <button type="button" data-action="add-existing-waypoint" class="secondary" style="flex: 1; min-width: 120px;">
                     <i class="fas fa-link"></i> Link Existing
+                </button>
+            </div>
+            <div class="waypoint-actions" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                <button type="button" data-action="select-all-waypoints" class="secondary" style="flex: 1;">
+                    <i class="fas fa-check-double"></i> Select All
+                </button>
+                <button type="button" data-action="deselect-all-waypoints" class="secondary" style="flex: 1;">
+                    <i class="fas fa-square"></i> Deselect All
+                </button>
+                <button type="button" data-action="delete-selected-waypoints" class="danger" style="flex: 1;">
+                    <i class="fas fa-trash"></i> Delete Selected
                 </button>
             </div>
             
@@ -196,7 +207,7 @@
         </div>
 
         {{!-- Timing Tab --}}
-        <div class="tab-content" data-tab="timing" data-group="primary">
+        <div class="tab" data-tab="timing" data-group="primary">
             <div class="form-group">
                 <label for="appearDuration">{{localize "rnk-patrol.fields.appearDuration"}}</label>
                 <div class="range-group">
@@ -223,7 +234,7 @@
         </div>
 
         {{!-- Detection Tab --}}
-        <div class="tab-content" data-tab="detection" data-group="primary">
+        <div class="tab" data-tab="detection" data-group="primary">
             <div class="form-group">
                 <label>
                     <input type="checkbox" name="detectEnabled" {{#if patrol.detectEnabled}}checked{{/if}}>

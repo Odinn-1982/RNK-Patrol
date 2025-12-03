@@ -220,9 +220,13 @@ export class PatrolManager {
      * Refresh waypoint visualizations
      */
     _refreshWaypoints() {
-        if (!canvas.ready) return
+        if (!canvas.ready) {
+            console.log('rnk-patrol | _refreshWaypoints: Canvas not ready')
+            return
+        }
         
         const waypoints = Waypoint.getSceneWaypoints(this._currentSceneId)
+        console.log(`rnk-patrol | _refreshWaypoints: Found ${waypoints.length} waypoints for scene ${this._currentSceneId}`)
         
         for (const waypoint of waypoints) {
             waypoint.updateVisual()
@@ -375,6 +379,15 @@ export class PatrolManager {
      */
     getWaypoints() {
         return Waypoint.getSceneWaypoints(this._currentSceneId)
+    }
+    
+    /**
+     * Get a specific waypoint by ID
+     * @param {string} waypointId 
+     * @returns {Waypoint|null}
+     */
+    getWaypoint(waypointId) {
+        return this.getWaypoints().find(w => w.id === waypointId) || null
     }
     
     /**

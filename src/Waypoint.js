@@ -391,7 +391,10 @@ export class Waypoint {
      * NOTE: Waypoints are ALWAYS GM-only visible for security
      */
     updateVisual() {
-        if (!canvas.ready) return
+        if (!canvas.ready) {
+            console.log(`rnk-patrol | Waypoint ${this.id}: Canvas not ready`)
+            return
+        }
         
         // IMPORTANT: Waypoints are ONLY visible to GMs - never to players
         // This is a security feature to prevent players from seeing patrol routes
@@ -402,6 +405,7 @@ export class Waypoint {
         
         // Check visibility setting (GM-only)
         const visibility = getSetting('showWaypoints', 'gm')
+        console.log(`rnk-patrol | Waypoint ${this.id} (${this.name}): visibility=${visibility}, x=${this.x}, y=${this.y}`)
         
         if (visibility === 'never') {
             this.removeVisual()
@@ -411,6 +415,7 @@ export class Waypoint {
         // Create or update container
         if (!this._visual) {
             this._createVisual()
+            console.log(`rnk-patrol | Waypoint ${this.id}: Created visual`)
         }
         
         this._updateVisualState()
@@ -512,32 +517,39 @@ export class Waypoint {
      * Get or create a dedicated layer for waypoints below tokens
      */
     _getOrCreateWaypointLayer() {
-        // Check if we already have a waypoint layer
-        if (canvas.stage?.rnkPatrolWaypoints) {
+        // Check if we already have a waypoint layer AND it's still attached to canvas
+        if (canvas.stage?.rnkPatrolWaypoints && canvas.stage.rnkPatrolWaypoints.parent) {
             return canvas.stage.rnkPatrolWaypoints
         }
 
         if (!canvas.stage) return null
 
+        // Clean up old reference if it exists but is detached
+        if (canvas.stage.rnkPatrolWaypoints) {
+            try {
+                canvas.stage.rnkPatrolWaypoints.destroy({ children: true })
+            } catch (e) { /* ignore */ }
+            canvas.stage.rnkPatrolWaypoints = null
+        }
+
         const container = new PIXI.Container()
         container.name = 'rnk-patrol-waypoints'
         container.sortableChildren = true
 
-        const tokenParent = canvas.tokens?.parent || canvas.stage
-        const parentChildren = tokenParent?.children || []
-        const tokenIndex = parentChildren.indexOf(canvas.tokens)
-
-        if (tokenParent && tokenIndex > -1) {
-            tokenParent.addChildAt(container, tokenIndex)
-        } else if (canvas.interface) {
-            const interfaceIndex = canvas.stage.children.indexOf(canvas.interface)
-            if (interfaceIndex > 0) {
-                canvas.stage.addChildAt(container, interfaceIndex)
+        // Try to add to the primary canvas group (above background, below tokens)
+        try {
+            if (canvas.primary?.group) {
+                canvas.primary.group.addChild(container)
+            } else if (canvas.interface) {
+                // Fallback: add to interface layer
+                canvas.interface.addChild(container)
             } else {
-                canvas.stage.addChildAt(container, 0)
+                // Last resort: add to stage
+                canvas.stage.addChild(container)
             }
-        } else {
-            canvas.stage.addChildAt(container, 0)
+        } catch (e) {
+            // Ultimate fallback
+            canvas.stage.addChild(container)
         }
 
         canvas.stage.rnkPatrolWaypoints = container

@@ -325,8 +325,26 @@ Hooks.once('ready', async () => {
     } catch (err) {
         error('Failed to load systems:', err)
     }
-        // Register handlebar helper for formatting date (used by GM Hub)
-        try { Handlebars.registerHelper('formatDate', (ts) => new Date(ts).toLocaleString()) } catch (e) {}
+})
+
+/**
+ * Canvas ready - reload patrols and waypoints for the current scene
+ * This hook fires when the canvas is ready (initial load or scene switch)
+ */
+Hooks.on('canvasReady', async () => {
+    if (!game.rnkPatrol?.manager) return
+    
+    log('Canvas ready - loading patrols for scene:', canvas.scene?.name)
+    
+    try {
+        await game.rnkPatrol.manager.loadScenePatrols(canvas.scene.id)
+    } catch (err) {
+        error('Failed to load patrols on canvas ready:', err)
+    }
+})
+
+// Register handlebar helper for formatting date (used by GM Hub)
+try { Handlebars.registerHelper('formatDate', (ts) => new Date(ts).toLocaleString()) } catch (e) {}
 
         // Expose a small QA method to simulate guard spawn for a scene
         game.rnkPatrol.simulateGuardSpawn = async function(sceneId, options = {}) {
