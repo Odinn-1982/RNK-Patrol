@@ -129,6 +129,12 @@
             </div>
 
             <div class="form-group">
+                <label for="tags">Tags (comma-separated)</label>
+                <input type="text" name="tags" value="{{patrol.tagsString}}" placeholder="e.g., city-guard, night-shift, elite">
+                <span class="hint">Organize patrols with tags for filtering</span>
+            </div>
+
+            <div class="form-group">
                 <label>
                     <input type="checkbox" name="automateCombat" {{#if (eq patrol.automateCombat true)}}checked{{/if}}>
                     Automate Combat for this Patrol (Inherit from global if unchecked)
@@ -155,6 +161,17 @@
             <p style="font-size: 0.85em; color: #888; margin-bottom: 10px;">
                 {{localize "rnk-patrol.apps.config.waypointHelp"}}
             </p>
+            
+            {{!-- Add Waypoint Button --}}
+            <div class="waypoint-actions" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                <button type="button" data-action="add-waypoint" class="secondary" style="flex: 1;">
+                    <i class="fas fa-plus"></i> Add New Waypoint
+                </button>
+                <button type="button" data-action="add-existing-waypoint" class="secondary" style="flex: 1;">
+                    <i class="fas fa-link"></i> Link Existing
+                </button>
+            </div>
+            
             <div class="waypoint-list">
                 {{#each waypoints}}
                 <div class="waypoint-item" draggable="true" data-waypoint-id="{{id}}">
@@ -165,6 +182,9 @@
                     <span style="color: var(--rnk-patrol-success); font-size: 0.8em;">
                         #{{order}}
                     </span>
+                    <button type="button" class="waypoint-action" data-action="pan-to-waypoint" data-waypoint-id="{{id}}" title="Pan to waypoint">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
                     {{/if}}
                 </div>
                 {{else}}

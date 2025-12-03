@@ -70,7 +70,10 @@ export class PatrolConfigApp extends FormApplication {
             .map(a => ({ id: a.id, name: a.name, img: a.img }))
 
         return {
-            patrol: patrol.toJSON(),
+            patrol: {
+                ...patrol.toJSON(),
+                tagsString: patrol.tags?.join(', ') || ''
+            },
             tokens,
             waypoints: allWaypoints.map(w => ({
                 id: w.id,
@@ -130,6 +133,12 @@ export class PatrolConfigApp extends FormApplication {
         const waypointCheckboxes = form.querySelectorAll('[name="waypoints"]:checked')
         waypointCheckboxes.forEach(cb => waypointIds.push(cb.value))
         
+        // Parse tags from comma-separated string
+        const tags = (formData.tags || '')
+            .split(',')
+            .map(t => t.trim().toLowerCase())
+            .filter(t => t.length > 0)
+        
         // Update patrol
         Object.assign(this.patrol, {
             name: formData.name,
@@ -147,11 +156,12 @@ export class PatrolConfigApp extends FormApplication {
             detectionAction: formData.detectionAction,
             detectionMacro: formData.detectionMacro || null,
             disabled: formData.disabled ?? false,
-            notes: formData.notes || ''
-            ,automateCombat: formData.automateCombat === 'on' || formData.automateCombat === true
-            ,automateDecisions: formData.automateDecisions === 'on' || formData.automateDecisions === true
-            ,automateRequireApproval: (formData.automateRequireApproval === 'inherit') ? null : (formData.automateRequireApproval === 'enabled')
-            ,aggressiveness: formData.aggressiveness || 'normal'
+            notes: formData.notes || '',
+            tags,
+            automateCombat: formData.automateCombat === 'on' || formData.automateCombat === true,
+            automateDecisions: formData.automateDecisions === 'on' || formData.automateDecisions === true,
+            automateRequireApproval: (formData.automateRequireApproval === 'inherit') ? null : (formData.automateRequireApproval === 'enabled'),
+            aggressiveness: formData.aggressiveness || 'normal'
         })
         
         await this.patrol.save()
@@ -222,6 +232,135 @@ export class PatrolConfigApp extends FormApplication {
                 macroGroup.hide()
             }
         })
+        
+        // Add new waypoint
+        html.find('[data-action="add-waypoint"]').click(async () => {
+            await this._onAddWaypoint()
+        })
+        
+        // Link existing waypoint
+        html.find('[data-action="add-existing-waypoint"]').click(async () => {
+            await this._onLinkExistingWaypoint()
+        })
+        
+        // Pan to waypoint
+        html.find('[data-action="pan-to-waypoint"]').click(async (event) => {
+            const waypointId = event.currentTarget.dataset.waypointId
+            await this._onPanToWaypoint(waypointId)
+        })
+    }
+    
+    /**
+     * Add a new waypoint at a clicked position
+     */
+    async _onAddWaypoint() {
+        ui.notifications.info('Click on the canvas to place a new waypoint. Press Escape to cancel.')
+        
+        // Minimize this window temporarily
+        this.minimize()
+        
+        // Set up click handler
+        const clickHandler = async (event) => {
+            // Get canvas coordinates from the click
+            const t = canvas.stage.worldTransform
+            const x = (event.clientX - t.tx) / canvas.stage.scale.x
+            const y = (event.clientY - t.ty) / canvas.stage.scale.y
+            
+            // Create waypoint
+            const waypoint = await this.manager.createWaypoint({
+                x,
+                y,
+                name: `${this.patrol.name} WP ${this.patrol.waypointIds.length + 1}`
+            })
+            
+            // Add to patrol
+            this.patrol.waypointIds.push(waypoint.id)
+            await this.patrol.save()
+            
+            // Clean up and refresh
+            canvas.stage.off('click', clickHandler)
+            document.removeEventListener('keydown', escHandler)
+            this.maximize()
+            this.render()
+            
+            ui.notifications.info(`Waypoint added: ${waypoint.name}`)
+        }
+        
+        const escHandler = (event) => {
+            if (event.key === 'Escape') {
+                canvas.stage.off('click', clickHandler)
+                document.removeEventListener('keydown', escHandler)
+                this.maximize()
+                ui.notifications.info('Waypoint placement cancelled.')
+            }
+        }
+        
+        canvas.stage.on('click', clickHandler)
+        document.addEventListener('keydown', escHandler)
+    }
+    
+    /**
+     * Link an existing unassigned waypoint
+     */
+    async _onLinkExistingWaypoint() {
+        const allWaypoints = this.manager?.getWaypoints() ?? []
+        const patrolWaypointIds = new Set(this.patrol.waypointIds)
+        
+        // Find waypoints not already in this patrol
+        const availableWaypoints = allWaypoints.filter(w => !patrolWaypointIds.has(w.id))
+        
+        if (availableWaypoints.length === 0) {
+            ui.notifications.warn('No available waypoints to link. Create a new waypoint instead.')
+            return
+        }
+        
+        const options = availableWaypoints.map(w => 
+            `<option value="${w.id}">${w.name}</option>`
+        ).join('')
+        
+        new Dialog({
+            title: 'Link Existing Waypoint',
+            content: `
+                <form>
+                    <div class="form-group">
+                        <label>Select Waypoint</label>
+                        <select name="waypointId" style="width: 100%;">
+                            ${options}
+                        </select>
+                    </div>
+                </form>
+            `,
+            buttons: {
+                link: {
+                    icon: '<i class="fas fa-link"></i>',
+                    label: 'Link',
+                    callback: async (html) => {
+                        const waypointId = html.find('[name="waypointId"]').val()
+                        if (waypointId) {
+                            this.patrol.waypointIds.push(waypointId)
+                            await this.patrol.save()
+                            this.render()
+                            ui.notifications.info('Waypoint linked to patrol.')
+                        }
+                    }
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: 'Cancel'
+                }
+            },
+            default: 'link'
+        }).render(true)
+    }
+    
+    /**
+     * Pan canvas to a waypoint
+     */
+    async _onPanToWaypoint(waypointId) {
+        const waypoint = this.manager?.getWaypoint(waypointId)
+        if (waypoint) {
+            canvas.animatePan({ x: waypoint.x, y: waypoint.y })
+        }
     }
     
     /**

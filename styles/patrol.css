@@ -22,6 +22,7 @@
    ========================================== */
 .rnk-patrol input[type="text"],
 .rnk-patrol input[type="number"],
+.rnk-patrol input[type="color"],
 .rnk-patrol select,
 .rnk-patrol textarea {
     background: rgba(10, 10, 20, 0.95) !important;
@@ -34,8 +35,74 @@
     color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.rnk-patrol select option {
-    background: #1a1a2e !important;
+/* Dropdown/Select styling - ensure options are visible */
+.rnk-patrol select,
+.patrol-config select,
+.patrol-creator select,
+.patrol-manager select,
+#rnk-patrol-config select,
+#rnk-patrol-creator select {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.rnk-patrol select option,
+.patrol-config select option,
+.patrol-creator select option,
+.patrol-manager select option,
+#rnk-patrol-config select option,
+#rnk-patrol-creator select option {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+    padding: 8px;
+}
+
+.rnk-patrol select option:hover,
+.rnk-patrol select option:checked {
+    background-color: #2a2a4e !important;
+    color: #ffffff !important;
+}
+
+/* Dialog dropdowns */
+.dialog select,
+.app select {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+}
+
+.dialog select option,
+.app select option {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+}
+
+/* Form group specific selectors */
+.rnk-patrol .form-group select,
+.patrol-config .form-group select,
+.patrol-config-form select {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+.rnk-patrol .form-group select option,
+.patrol-config .form-group select option,
+.patrol-config-form select option {
+    background-color: #1a1a2e !important;
+    color: #ffffff !important;
+}
+
+/* Ensure Foundry default styles don't override */
+.rnk-patrol.app select,
+.rnk-patrol.app select option,
+#rnk-patrol-config.app select,
+#rnk-patrol-config.app select option {
+    background-color: #1a1a2e !important;
     color: #ffffff !important;
 }
 
@@ -1064,3 +1131,84 @@ body.rnk-patrol-placing #board * {
     animation: heartbeat 1s ease-in-out infinite;
 }
 
+/* ==========================================
+   Patrol Config - Waypoint Styles
+   ========================================== */
+
+.patrol-config .waypoint-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.patrol-config .waypoint-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+}
+
+.patrol-config .waypoint-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.patrol-config .waypoint-item:last-child {
+    border-bottom: none;
+}
+
+.patrol-config .waypoint-item.dragging {
+    opacity: 0.5;
+    background: rgba(123, 104, 238, 0.2);
+}
+
+.patrol-config .waypoint-item .drag-handle {
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 0 4px;
+}
+
+.patrol-config .waypoint-item .drag-handle:hover {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.patrol-config .waypoint-item .waypoint-name {
+    flex: 1;
+    font-size: 0.9em;
+}
+
+.patrol-config .waypoint-item .waypoint-action {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.patrol-config .waypoint-item .waypoint-action:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.patrol-config .waypoint-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.patrol-config .waypoint-actions button {
+    flex: 1;
+}
+
+/* Hint text styling */
+.patrol-config .hint {
+    display: block;
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+}

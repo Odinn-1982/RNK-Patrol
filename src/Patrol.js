@@ -165,6 +165,36 @@ export class Patrol {
         this.alertLevel = data.alertLevel || 0
 
         /**
+         * Guard actor ID (optional override for spawning)
+         * @type {string|null}
+         */
+        this.guardActorId = data.guardActorId || null
+
+        /**
+         * Automate combat for this patrol
+         * @type {boolean}
+         */
+        this.automateCombat = data.automateCombat ?? false
+
+        /**
+         * Automate bribe/capture decisions for this patrol
+         * @type {boolean}
+         */
+        this.automateDecisions = data.automateDecisions ?? false
+
+        /**
+         * Require GM approval for AI actions (null = inherit from global)
+         * @type {boolean|null}
+         */
+        this.automateRequireApproval = data.automateRequireApproval ?? null
+
+        /**
+         * Aggressiveness level (conservative, normal, aggressive)
+         * @type {string}
+         */
+        this.aggressiveness = data.aggressiveness || 'normal'
+
+        /**
          * Detected tokens (IDs)
          * @type {Set<string>}
          */
@@ -1286,7 +1316,12 @@ export class Patrol {
             tags: this.tags,
             notes: this.notes,
             disabled: this.disabled,
-            alertLevel: this.alertLevel
+            alertLevel: this.alertLevel,
+            guardActorId: this.guardActorId,
+            automateCombat: this.automateCombat,
+            automateDecisions: this.automateDecisions,
+            automateRequireApproval: this.automateRequireApproval,
+            aggressiveness: this.aggressiveness
         }
     }
 
