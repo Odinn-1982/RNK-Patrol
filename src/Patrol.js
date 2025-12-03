@@ -962,6 +962,82 @@ export class Patrol {
     // ==========================================
 
     /**
+     * Find a valid position near the waypoint that doesn't collide with walls
+     * @param {number} targetX - Target X coordinate (center)
+     * @param {number} targetY - Target Y coordinate (center)
+     * @param {number} tokenWidth - Token width in pixels
+     * @param {number} tokenHeight - Token height in pixels
+     * @returns {{x: number, y: number}} - Valid position (top-left corner)
+     */
+    _findValidPosition(targetX, targetY, tokenWidth, tokenHeight) {
+        const offsetX = tokenWidth / 2
+        const offsetY = tokenHeight / 2
+        
+        // Base position (top-left corner from center)
+        let bestX = targetX - offsetX
+        let bestY = targetY - offsetY
+        
+        // Check if we have wall collision detection available
+        if (!canvas.walls?.checkCollision) {
+            return { x: bestX, y: bestY }
+        }
+        
+        // Test if the center point has collision
+        const origin = { x: targetX, y: targetY }
+        
+        // Check collision from center to slightly offset positions
+        // If there's a wall at the exact position, try nearby positions
+        const gridSize = canvas.grid.size
+        const searchOffsets = [
+            { dx: 0, dy: 0 },           // Original position
+            { dx: gridSize, dy: 0 },    // Right
+            { dx: -gridSize, dy: 0 },   // Left
+            { dx: 0, dy: gridSize },    // Down
+            { dx: 0, dy: -gridSize },   // Up
+            { dx: gridSize, dy: gridSize },    // Diagonal
+            { dx: -gridSize, dy: gridSize },
+            { dx: gridSize, dy: -gridSize },
+            { dx: -gridSize, dy: -gridSize },
+            { dx: gridSize * 2, dy: 0 },  // Further out
+            { dx: -gridSize * 2, dy: 0 },
+            { dx: 0, dy: gridSize * 2 },
+            { dx: 0, dy: -gridSize * 2 }
+        ]
+        
+        for (const offset of searchOffsets) {
+            const testX = targetX + offset.dx
+            const testY = targetY + offset.dy
+            
+            // Check collision using ray from a point slightly away
+            const testOrigin = { x: testX - 1, y: testY - 1 }
+            const testDest = { x: testX + 1, y: testY + 1 }
+            
+            try {
+                const hasCollision = canvas.walls.checkCollision(
+                    new Ray(testOrigin, testDest),
+                    { type: 'move', mode: 'any' }
+                )
+                
+                if (!hasCollision) {
+                    return { 
+                        x: testX - offsetX, 
+                        y: testY - offsetY 
+                    }
+                }
+            } catch (e) {
+                // If collision check fails, just use this position
+                return { 
+                    x: testX - offsetX, 
+                    y: testY - offsetY 
+                }
+            }
+        }
+        
+        // If all positions have collision, use original
+        return { x: bestX, y: bestY }
+    }
+
+    /**
      * Move token to waypoint position
      * @param {Waypoint} waypoint
      * @param {boolean} visible
@@ -970,14 +1046,22 @@ export class Patrol {
         const tokenDoc = this.tokenDocument
         if (!tokenDoc) return
 
-        // Calculate token top-left from waypoint center
+        // Calculate token dimensions
         const token = this.token
-        const offsetX = token ? token.w / 2 : canvas.grid.size / 2
-        const offsetY = token ? token.h / 2 : canvas.grid.size / 2
+        const tokenWidth = token ? token.w : canvas.grid.size
+        const tokenHeight = token ? token.h : canvas.grid.size
+
+        // Find a valid position that doesn't collide with walls
+        const validPos = this._findValidPosition(
+            waypoint.x, 
+            waypoint.y, 
+            tokenWidth, 
+            tokenHeight
+        )
 
         await tokenDoc.update({
-            x: waypoint.x - offsetX,
-            y: waypoint.y - offsetY,
+            x: validPos.x,
+            y: validPos.y,
             hidden: !visible
         }, { animate: false })
     }
